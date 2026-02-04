@@ -216,6 +216,14 @@ wss.on('connection', (ws, req) => {
         ws.send(JSON.stringify({ type: 'sessions', sessions: listScreenSessions() }));
         break;
       }
+      case 'clear_buffer': {
+        const s = activePtys.get(currentSession);
+        if (s) {
+          s.buffer = [];
+          console.log(`Buffer cleared for ${currentSession}`);
+        }
+        break;
+      }
     }
   });
 

@@ -505,10 +505,12 @@ function fitTerm() {
 
 function clearTerm() {
   if (!term) return;
-  term.clear();
-  term.refresh(0, term.rows - 1);
-  // Send Ctrl+L to Claude Code to redraw its UI
-  wsSend({ type: 'control', key: 'ctrl+l' });
+  // Full terminal reset (clears all state, scrollback, etc)
+  term.reset();
+  // Tell server to clear its buffer too
+  wsSend({ type: 'clear_buffer' });
+  // Send Ctrl+L to Claude Code to redraw fresh
+  setTimeout(() => wsSend({ type: 'control', key: 'ctrl+l' }), 100);
 }
 
 function connectWs() {
@@ -578,7 +580,9 @@ async function refreshSessions() {
 function renderTabs() {
   const c = document.getElementById('tabs');
   c.innerHTML = '';
-  sessions.forEach(s => {
+  // Sort sessions alphabetically/numerically
+  const sorted = [...sessions].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  sorted.forEach(s => {
     const b = document.createElement('button');
     b.className = 'tab' + (s.name === curSession ? ' active' : '');
     const label = s.name.length > 20 ? s.name.slice(0, 18) + '...' : s.name;
