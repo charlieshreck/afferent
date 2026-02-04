@@ -8,8 +8,8 @@
 <meta name="theme-color" content="#0d1117">
 <title>Afferent</title>
 <link rel="manifest" href="/manifest.json">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/xterm/5.3.0/xterm.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xterm/5.3.0/xterm.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -499,12 +499,16 @@ function fitTerm() {
 function connectWs() {
   if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  ws = new WebSocket(`${proto}://${location.host}?token=${encodeURIComponent(token)}`);
+  const wsUrl = `${proto}://${location.host}?token=${encodeURIComponent(token)}`;
+  console.log('Connecting WebSocket to:', wsUrl);
+  ws = new WebSocket(wsUrl);
   ws.onopen = () => {
+    console.log('WebSocket connected!');
     reconN = 0; setBadge('');
     if (curSession) wsSend({ type: 'attach', session: curSession });
   };
   ws.onmessage = (e) => {
+    console.log('WebSocket message:', e.data.substring(0, 100));
     const m = JSON.parse(e.data);
     if (m.type === 'output') term?.write(m.data);
     else if (m.type === 'buffer') { term?.clear(); term?.write(m.data); }
@@ -577,12 +581,15 @@ function switchTo(name) {
 
 const txt = document.getElementById('txt');
 function send() {
-  const v = txt.value;
+  const v = txt.value.trim();
   if (!v || !curSession) return;
-  wsSend({ type: 'input', data: v + '\n' });
+  // Send text first, then Enter separately (mimics real typing)
+  wsSend({ type: 'input', data: v });
+  setTimeout(() => wsSend({ type: 'input', data: '\r' }), 50);
   txt.value = ''; autoH(); txt.focus();
 }
 txt.addEventListener('keydown', (e) => {
+  console.log('keydown:', e.key);
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
 });
 txt.addEventListener('input', autoH);

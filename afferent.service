@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 WorkingDirectory=/home/afferent
 Environment=PORT=3456
-Environment=AUTH_TOKEN=REPLACE_WITH_GENERATED_TOKEN
+Environment=AUTH_TOKEN=590a6361e21a578f578c70085f1b81e84103f023d183c0d7c62ced6ac8d1ee58
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
 RestartSec=5

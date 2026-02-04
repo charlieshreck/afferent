@@ -83,6 +83,7 @@ function attachToSession(sessionName) {
   let bufferLen = 0;
 
   term.onData((data) => {
+    console.log('PTY output received:', data.length, 'bytes');
     session.buffer.push(data);
     bufferLen += data.length;
     while (bufferLen > session.bufferMaxChars && session.buffer.length > 1) {
@@ -134,12 +135,15 @@ const heartbeatInterval = setInterval(() => {
 wss.on('close', () => clearInterval(heartbeatInterval));
 
 wss.on('connection', (ws, req) => {
+  console.log(`WebSocket connection from ${req.socket.remoteAddress}`);
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (url.searchParams.get('token') !== AUTH_TOKEN) {
+    console.log('WebSocket auth failed - invalid token');
     ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
     ws.close(1008, 'Unauthorized');
     return;
   }
+  console.log('WebSocket authenticated successfully');
 
   ws.isAlive = true;
   ws.on('pong', () => { ws.isAlive = true; });
@@ -149,9 +153,11 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (raw) => {
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
+    console.log('WS message:', msg.type, msg.type === 'input' ? `"${msg.data?.substring(0,20)}"` : '');
 
     switch (msg.type) {
       case 'attach': {
+        console.log('Attaching to session:', msg.session);
         if (currentSession && activePtys.has(currentSession)) {
           activePtys.get(currentSession).clients.delete(ws);
         }
@@ -170,7 +176,11 @@ wss.on('connection', (ws, req) => {
       }
       case 'input': {
         const s = activePtys.get(currentSession);
-        if (s) s.pty.write(msg.data);
+        console.log('Writing to PTY, session:', currentSession, 'found:', !!s);
+        if (s) {
+          console.log('PTY write:', JSON.stringify(msg.data));
+          s.pty.write(msg.data);
+        }
         break;
       }
       case 'control': {
