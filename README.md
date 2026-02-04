@@ -34,7 +34,7 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt-get install -y nodejs build-essential python3 screen
 
 # App dependencies
-cd /root/afferent
+cd /home/afferent
 npm install
 ```
 

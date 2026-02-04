@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/root/afferent
+WorkingDirectory=/home/afferent
 Environment=PORT=3456
 Environment=AUTH_TOKEN=REPLACE_WITH_GENERATED_TOKEN
 ExecStart=/usr/bin/node server.js
