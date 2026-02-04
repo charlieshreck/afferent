@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1117">
+<title>Afferent</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/xterm/5.3.0/xterm.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xterm/5.3.0/xterm.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --md-bg: #0d1117;
+    --md-surface: rgba(22, 27, 34, 0.75);
+    --md-surface-high: rgba(30, 37, 46, 0.82);
+    --md-surface-bright: rgba(45, 55, 68, 0.6);
+    --md-outline: rgba(125, 140, 160, 0.15);
+    --md-outline-bright: rgba(125, 140, 160, 0.25);
+    --md-primary: #f0b866;
+    --md-primary-dim: #c49545;
+    --md-primary-container: rgba(240, 184, 102, 0.12);
+    --md-primary-container-hi: rgba(240, 184, 102, 0.2);
+    --md-on-primary: #1a1200;
+    --md-primary-glow: rgba(240, 184, 102, 0.25);
+    --md-success: #6dd58c;
+    --md-success-glow: rgba(109, 213, 140, 0.35);
+    --md-error: #f2836b;
+    --md-error-container: rgba(242, 131, 107, 0.15);
+    --md-warn: #f0b866;
+    --md-warn-container: rgba(240, 184, 102, 0.15);
+    --md-on-surface: #e6edf3;
+    --md-on-surface-med: rgba(230, 237, 243, 0.72);
+    --md-on-surface-dim: rgba(230, 237, 243, 0.4);
+    --glass-blur: 20px;
+    --glass-saturate: 1.4;
+    --elevation-1: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+    --elevation-2: 0 2px 6px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.25);
+    --elevation-3: 0 4px 12px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-full: 9999px;
+  }
+
+  body {
+    background: var(--md-bg);
+    color: var(--md-on-surface);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #topbar {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 8px;
+    flex-shrink: 0;
+    min-height: 52px;
+    background: var(--md-surface);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border-bottom: 1px solid var(--md-outline);
+    z-index: 20;
+    position: relative;
+  }
+
+  .logo-mark {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--md-primary-container);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px rgba(240,184,102,0.15);
+  }
+
+  #tabs {
+    display: flex; gap: 6px; flex: 1;
+    overflow-x: auto; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  #tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    padding: 7px 16px;
+    border-radius: var(--radius-full);
+    font-size: 13px; font-weight: 600; letter-spacing: 0.01em;
+    border: none;
+    background: var(--md-surface-bright);
+    color: var(--md-on-surface-med);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    position: relative; overflow: hidden;
+  }
+  .tab::before {
+    content: '';
+    position: absolute; inset: 0; border-radius: inherit; opacity: 0;
+    background: radial-gradient(circle at center, var(--md-primary-glow) 0%, transparent 70%);
+    transition: opacity 0.3s;
+  }
+  .tab:active::before { opacity: 1; }
+  .tab.active {
+    background: var(--md-primary-container-hi);
+    color: var(--md-primary);
+    box-shadow: 0 0 12px var(--md-primary-glow), inset 0 0 0 1px rgba(240,184,102,0.2);
+  }
+
+  .dot {
+    display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%; margin-right: 6px; vertical-align: middle;
+    transition: all 0.3s;
+  }
+  .dot.on { background: var(--md-success); box-shadow: 0 0 8px var(--md-success-glow); }
+  .dot.off { background: var(--md-on-surface-dim); }
+
+  #btn-refresh {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-full);
+    background: var(--md-surface-bright);
+    border: none; color: var(--md-on-surface-med);
+    font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #btn-refresh:active {
+    background: var(--md-primary-container);
+    color: var(--md-primary);
+    transform: rotate(180deg);
+  }
+
+  #term-wrap {
+    flex: 1; position: relative; overflow: hidden;
+    background: var(--md-bg);
+  }
+  #term-wrap .xterm { height: 100%; padding: 4px 6px; }
+  #term-wrap::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 20px;
+    background: linear-gradient(to bottom, var(--md-bg), transparent);
+    z-index: 5; pointer-events: none;
+  }
+
+  #status-badge {
+    position: absolute; top: 10px; right: 10px;
+    padding: 5px 14px; border-radius: var(--radius-full);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+    z-index: 10; display: none; pointer-events: none;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  #status-badge.disc {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--md-error-container);
+    color: var(--md-error);
+    border: 1px solid rgba(242,131,107,0.2);
+    box-shadow: 0 0 16px rgba(242,131,107,0.15);
+  }
+  #status-badge.recon {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--md-warn-container);
+    color: var(--md-warn);
+    border: 1px solid rgba(240,184,102,0.2);
+    animation: pulse-badge 2s ease-in-out infinite;
+  }
+  @keyframes pulse-badge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  #placeholder {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: var(--md-on-surface-dim);
+    font-size: 14px; text-align: center; padding: 32px; gap: 12px; line-height: 1.6;
+  }
+  #placeholder.hidden { display: none; }
+  #placeholder .ph-icon {
+    width: 48px; height: 48px;
+    border-radius: var(--radius-md);
+    background: var(--md-primary-container);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 4px;
+  }
+
+  #ctrlbar {
+    display: flex; padding: 6px 8px; gap: 5px; flex-shrink: 0;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    background: var(--md-surface);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border-top: 1px solid var(--md-outline);
+    z-index: 20;
+  }
+  #ctrlbar::-webkit-scrollbar { display: none; }
+
+  .ck {
+    padding: 8px 12px; border-radius: var(--radius-sm);
+    border: 1px solid var(--md-outline);
+    background: var(--md-surface-bright);
+    color: var(--md-on-surface-med);
+    font-size: 12px; font-weight: 500;
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    min-height: 36px; min-width: 36px;
+    display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+    position: relative; overflow: hidden;
+  }
+  .ck::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    background: var(--md-primary); opacity: 0; transition: opacity 0.1s;
+  }
+  .ck:active::after { opacity: 0.15; }
+  .ck:active { transform: scale(0.95); box-shadow: var(--elevation-1); }
+  .ck.hi {
+    color: var(--md-primary);
+    border-color: rgba(240,184,102,0.2);
+    background: var(--md-primary-container);
+  }
+  .ck.hi:active {
+    background: var(--md-primary-container-hi);
+    box-shadow: 0 0 10px var(--md-primary-glow);
+  }
+  .ck.sep {
+    border: none; background: transparent;
+    width: 1px; min-width: 1px; padding: 0; margin: 4px 2px;
+    cursor: default; background: var(--md-outline);
+  }
+  .ck.sep::after { display: none; }
+
+  #inputbar {
+    display: flex; padding: 10px 12px;
+    padding-bottom: calc(10px + var(--safe-bottom));
+    gap: 10px; flex-shrink: 0; align-items: flex-end;
+    background: var(--md-surface-high);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border-top: 1px solid var(--md-outline);
+    z-index: 20;
+  }
+
+  #txt {
+    flex: 1; background: rgba(255,255,255,0.05);
+    border: 1.5px solid var(--md-outline-bright);
+    border-radius: var(--radius-lg);
+    padding: 12px 18px; color: var(--md-on-surface);
+    font-size: 16px; font-family: 'Inter', sans-serif;
+    outline: none; resize: none; max-height: 120px; line-height: 1.4;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  #txt::placeholder { color: var(--md-on-surface-dim); }
+  #txt:focus {
+    border-color: var(--md-primary);
+    box-shadow: 0 0 0 2px var(--md-primary-glow);
+  }
+
+  #btn-send {
+    width: 48px; height: 48px;
+    border-radius: var(--radius-full);
+    border: none; background: var(--md-primary);
+    color: var(--md-on-primary); font-size: 20px;
+    cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: var(--elevation-2);
+    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    position: relative; overflow: hidden;
+  }
+  #btn-send:active {
+    transform: scale(0.92);
+    box-shadow: var(--elevation-1);
+    background: var(--md-primary-dim);
+  }
+  #btn-send .ripple {
+    position: absolute; border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transform: scale(0);
+    animation: ripple-out 0.5s ease-out;
+    pointer-events: none;
+  }
+  @keyframes ripple-out {
+    to { transform: scale(2.5); opacity: 0; }
+  }
+
+  #login {
+    position: fixed; inset: 0; background: var(--md-bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100; padding: 24px;
+  }
+  #login.hidden { display: none; }
+
+  .login-card {
+    width: 100%; max-width: 380px;
+    background: var(--md-surface-high);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--md-outline);
+    padding: 32px 28px;
+    box-shadow: var(--elevation-3);
+    display: flex; flex-direction: column;
+    align-items: center; gap: 8px;
+  }
+  .login-logo {
+    width: 56px; height: 56px; border-radius: 16px;
+    background: var(--md-primary-container);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; margin-bottom: 4px;
+    box-shadow: 0 0 20px var(--md-primary-glow);
+  }
+  .login-card h1 {
+    font-size: 22px; font-weight: 700;
+    color: var(--md-on-surface); letter-spacing: -0.01em;
+  }
+  .login-card p {
+    color: var(--md-on-surface-dim); font-size: 14px; margin-bottom: 16px;
+  }
+  .login-card input {
+    width: 100%; padding: 14px 18px;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--md-outline-bright);
+    background: rgba(255,255,255,0.04);
+    color: var(--md-on-surface); font-size: 16px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .login-card input:focus {
+    border-color: var(--md-primary);
+    box-shadow: 0 0 0 2px var(--md-primary-glow);
+  }
+  .login-card input::placeholder { color: var(--md-on-surface-dim); }
+  .login-btn {
+    width: 100%; padding: 14px;
+    border-radius: var(--radius-md); border: none;
+    background: var(--md-primary); color: var(--md-on-primary);
+    font-size: 15px; font-weight: 600;
+    font-family: 'Inter', sans-serif; letter-spacing: 0.02em;
+    cursor: pointer; margin-top: 8px;
+    box-shadow: var(--elevation-2); transition: all 0.2s;
+  }
+  .login-btn:active {
+    transform: scale(0.98);
+    box-shadow: var(--elevation-1);
+    background: var(--md-primary-dim);
+  }
+
+  body::before {
+    content: ''; position: fixed;
+    top: -40%; left: -20%; width: 140%; height: 60%;
+    background: radial-gradient(ellipse at 50% 0%, rgba(240,184,102,0.04) 0%, transparent 65%);
+    pointer-events: none; z-index: 0;
+  }
+  #topbar, #ctrlbar, #inputbar { position: relative; }
+  .tab, .ck, #btn-refresh, #btn-send, .login-btn { will-change: transform; }
+  .xterm-viewport::-webkit-scrollbar { width: 4px; }
+  .xterm-viewport::-webkit-scrollbar-track { background: transparent; }
+  .xterm-viewport::-webkit-scrollbar-thumb {
+    background: var(--md-on-surface-dim); border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="login-card">
+    <div class="login-logo">&#x2B21;</div>
+    <h1>Afferent</h1>
+    <p>Connect to your screen sessions</p>
+    <input type="password" id="tok-in" placeholder="Auth token" autocomplete="off">
+    <button class="login-btn" onclick="doLogin()">Connect</button>
+  </div>
+</div>
+
+<div id="topbar">
+  <div class="logo-mark">&#x2B21;</div>
+  <div id="tabs"></div>
+  <button id="btn-refresh" onclick="refreshSessions()" title="Refresh">&#x21BB;</button>
+</div>
+
+<div id="term-wrap">
+  <div id="status-badge"></div>
+  <div id="placeholder">
+    <div class="ph-icon">&#x2B21;</div>
+    Discovering screen sessions...
+  </div>
+</div>
+
+<div id="ctrlbar">
+  <button class="ck" data-k="ctrl+c">^C</button>
+  <button class="ck" data-k="ctrl+d">^D</button>
+  <button class="ck" data-k="ctrl+z">^Z</button>
+  <button class="ck" data-k="ctrl+l">^L</button>
+  <button class="ck" data-k="tab">Tab</button>
+  <button class="ck" data-k="escape">Esc</button>
+  <div class="ck sep"></div>
+  <button class="ck" data-k="up">&#x2191;</button>
+  <button class="ck" data-k="down">&#x2193;</button>
+  <button class="ck" data-k="left">&#x2190;</button>
+  <button class="ck" data-k="right">&#x2192;</button>
+  <div class="ck sep"></div>
+  <button class="ck hi" data-k="ctrl+a">^A</button>
+  <button class="ck hi" data-k="screen-next">^An</button>
+  <button class="ck hi" data-k="screen-prev">^Ap</button>
+  <button class="ck hi" data-k="screen-list">^A"</button>
+  <button class="ck hi" data-k="screen-copy">^A[</button>
+</div>
+
+<div id="inputbar">
+  <textarea id="txt" rows="1" placeholder="Type a command..." enterkeyhint="send"></textarea>
+  <button id="btn-send" onclick="send()"><span style="font-size:18px">&#x25B6;</span></button>
+</div>
+
+<script>
+let token = localStorage.getItem('csk') || '';
+let ws = null, term = null;
+let curSession = null, sessions = [];
+let reconTimer = null, reconN = 0;
+
+const qp = new URLSearchParams(location.search);
+if (qp.get('token')) {
+  token = qp.get('token');
+  localStorage.setItem('csk', token);
+  history.replaceState({}, '', location.pathname);
+}
+if (token) { hide('login'); init(); }
+
+function doLogin() {
+  token = document.getElementById('tok-in').value.trim();
+  if (!token) return;
+  localStorage.setItem('csk', token);
+  hide('login');
+  init();
+}
+
+function init() {
+  initTerm();
+  connectWs();
+  refreshSessions();
+}
+
+function initTerm() {
+  if (term) return;
+  term = new Terminal({
+    theme: {
+      background: '#0d1117', foreground: '#e6edf3',
+      cursor: '#f0b866', cursorAccent: '#0d1117',
+      selectionBackground: 'rgba(240,184,102,0.2)',
+      black: '#0d1117', red: '#f2836b',
+      green: '#6dd58c', yellow: '#f0b866',
+      blue: '#79c0ff', magenta: '#d2a8ff',
+      cyan: '#76e3ea', white: '#e6edf3',
+      brightBlack: '#484f58', brightRed: '#ffa198',
+      brightGreen: '#8ddb9a', brightYellow: '#f5cc84',
+      brightBlue: '#a5d6ff', brightMagenta: '#e2c5ff',
+      brightCyan: '#96f0f6', brightWhite: '#ffffff'
+    },
+    fontSize: 13,
+    fontFamily: "'JetBrains Mono','SF Mono','Fira Code','Cascadia Code',Menlo,monospace",
+    fontWeight: '400',
+    cursorBlink: true,
+    cursorStyle: 'bar',
+    scrollback: 5000,
+    convertEol: true
+  });
+  term.open(document.getElementById('term-wrap'));
+  if (term.textarea) term.textarea.setAttribute('readonly', 'readonly');
+  new ResizeObserver(() => fitTerm()).observe(document.getElementById('term-wrap'));
+  fitTerm();
+}
+
+function fitTerm() {
+  if (!term) return;
+  const el = document.getElementById('term-wrap');
+  const cols = Math.max(20, Math.floor((el.clientWidth - 16) / 7.8));
+  const rows = Math.max(5, Math.floor((el.clientHeight - 16) / 17));
+  term.resize(cols, rows);
+  wsSend({ type: 'resize', cols, rows });
+}
+
+function connectWs() {
+  if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}?token=${encodeURIComponent(token)}`);
+  ws.onopen = () => {
+    reconN = 0; setBadge('');
+    if (curSession) wsSend({ type: 'attach', session: curSession });
+  };
+  ws.onmessage = (e) => {
+    const m = JSON.parse(e.data);
+    if (m.type === 'output') term?.write(m.data);
+    else if (m.type === 'buffer') { term?.clear(); term?.write(m.data); }
+    else if (m.type === 'attached') {
+      curSession = m.session; hide('placeholder');
+      renderTabs(); fitTerm();
+    }
+    else if (m.type === 'sessions') { sessions = m.sessions; renderTabs(); }
+    else if (m.type === 'session_ended') {
+      if (m.session === curSession) {
+        curSession = null;
+        showPlaceholder('Session ended. Hit refresh to reload.');
+      }
+      refreshSessions();
+    }
+    else if (m.type === 'error' && m.message === 'Unauthorized') {
+      localStorage.removeItem('csk'); show('login');
+    }
+  };
+  ws.onclose = () => { setBadge('disc'); scheduleRecon(); };
+  ws.onerror = () => { setBadge('disc'); };
+}
+
+function wsSend(obj) { if (ws?.readyState === 1) ws.send(JSON.stringify(obj)); }
+
+function scheduleRecon() {
+  if (reconN >= 12) return;
+  reconN++; setBadge('recon');
+  clearTimeout(reconTimer);
+  reconTimer = setTimeout(connectWs, Math.min(1000 * 1.5 ** reconN, 15000));
+}
+
+function setBadge(cls) {
+  const b = document.getElementById('status-badge');
+  b.className = cls;
+  if (cls === 'disc') b.innerHTML = '<span style="font-size:8px">&#x2715;</span> Disconnected';
+  else if (cls === 'recon') b.innerHTML = '<span style="font-size:8px">&#x21BB;</span> Reconnecting...';
+  else b.innerHTML = '';
+}
+
+async function refreshSessions() {
+  try {
+    const r = await fetch('/api/sessions', { headers: { Authorization: `Bearer ${token}` } });
+    const d = await r.json();
+    sessions = d.sessions || [];
+    renderTabs();
+    if (!curSession && sessions.length > 0) switchTo(sessions[0].name);
+    else if (sessions.length === 0) showPlaceholder('No screen sessions found.\nStart your sessions, then hit refresh');
+  } catch {}
+}
+
+function renderTabs() {
+  const c = document.getElementById('tabs');
+  c.innerHTML = '';
+  sessions.forEach(s => {
+    const b = document.createElement('button');
+    b.className = 'tab' + (s.name === curSession ? ' active' : '');
+    const label = s.name.length > 20 ? s.name.slice(0, 18) + '...' : s.name;
+    b.innerHTML = `<span class="dot ${s.connected ? 'on' : 'off'}"></span>${label}`;
+    b.onclick = () => switchTo(s.name);
+    c.appendChild(b);
+  });
+}
+
+function switchTo(name) {
+  if (name === curSession) return;
+  term?.clear();
+  wsSend({ type: 'attach', session: name });
+}
+
+const txt = document.getElementById('txt');
+function send() {
+  const v = txt.value;
+  if (!v || !curSession) return;
+  wsSend({ type: 'input', data: v + '\n' });
+  txt.value = ''; autoH(); txt.focus();
+}
+txt.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+txt.addEventListener('input', autoH);
+function autoH() {
+  txt.style.height = 'auto';
+  txt.style.height = Math.min(txt.scrollHeight, 120) + 'px';
+}
+
+document.getElementById('ctrlbar').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-k]');
+  if (!btn) return;
+  wsSend({ type: 'control', key: btn.dataset.k });
+  btn.style.transform = 'scale(0.92)';
+  btn.style.boxShadow = 'var(--elevation-1)';
+  setTimeout(() => { btn.style.transform = ''; btn.style.boxShadow = ''; }, 150);
+});
+
+document.getElementById('term-wrap').addEventListener('touchend', (e) => {
+  if (!window.getSelection()?.toString()) { e.preventDefault(); txt.focus(); }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    if (!ws || ws.readyState !== 1) connectWs();
+    refreshSessions();
+  }
+});
+
+document.getElementById('btn-send').addEventListener('pointerdown', function(e) {
+  const r = document.createElement('span');
+  r.className = 'ripple';
+  const rect = this.getBoundingClientRect();
+  const sz = Math.max(rect.width, rect.height) * 2;
+  r.style.width = r.style.height = sz + 'px';
+  r.style.left = (e.clientX - rect.left - sz/2) + 'px';
+  r.style.top = (e.clientY - rect.top - sz/2) + 'px';
+  this.appendChild(r);
+  setTimeout(() => r.remove(), 500);
+});
+
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function showPlaceholder(msg) {
+  const p = document.getElementById('placeholder');
+  p.innerHTML = `<div class="ph-icon">&#x2B21;</div>${msg.replace('\n', '<br>')}`;
+  p.classList.remove('hidden');
+}
+</script>
+</body>
+</html>

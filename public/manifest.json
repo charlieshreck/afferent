@@ -1,0 +1,10 @@
+{
+  "name": "Afferent",
+  "short_name": "Afferent",
+  "description": "Afferent pathway to Claude Code screen sessions",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "orientation": "portrait"
+}

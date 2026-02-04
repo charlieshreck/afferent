@@ -1,0 +1,15 @@
+[Unit]
+Description=Afferent - Claude Code Screen Access
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/afferent
+Environment=PORT=3456
+Environment=AUTH_TOKEN=REPLACE_WITH_GENERATED_TOKEN
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
