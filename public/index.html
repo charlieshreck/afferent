@@ -126,7 +126,7 @@
   .dot.on { background: var(--md-success); box-shadow: 0 0 8px var(--md-success-glow); }
   .dot.off { background: var(--md-on-surface-dim); }
 
-  #btn-refresh {
+  #btn-refresh, #btn-clear {
     width: 36px; height: 36px;
     border-radius: var(--radius-full);
     background: var(--md-surface-bright);
@@ -140,6 +140,10 @@
     background: var(--md-primary-container);
     color: var(--md-primary);
     transform: rotate(180deg);
+  }
+  #btn-clear:active {
+    background: var(--md-primary-container);
+    color: var(--md-primary);
   }
 
   #term-wrap {
@@ -370,7 +374,7 @@
     pointer-events: none; z-index: 0;
   }
   #topbar, #ctrlbar, #inputbar { position: relative; }
-  .tab, .ck, #btn-refresh, #btn-send, .login-btn { will-change: transform; }
+  .tab, .ck, #btn-refresh, #btn-clear, #btn-send, .login-btn { will-change: transform; }
   .xterm-viewport::-webkit-scrollbar { width: 4px; }
   .xterm-viewport::-webkit-scrollbar-track { background: transparent; }
   .xterm-viewport::-webkit-scrollbar-thumb {
@@ -393,7 +397,8 @@
 <div id="topbar">
   <div class="logo-mark">&#x2B21;</div>
   <div id="tabs"></div>
-  <button id="btn-refresh" onclick="refreshSessions()" title="Refresh">&#x21BB;</button>
+  <button id="btn-clear" onclick="clearTerm()" title="Clear/Redraw">&#x239A;</button>
+  <button id="btn-refresh" onclick="refreshSessions()" title="Refresh Sessions">&#x21BB;</button>
 </div>
 
 <div id="term-wrap">
@@ -493,7 +498,17 @@ function fitTerm() {
   const cols = Math.max(20, Math.floor((el.clientWidth - 16) / 7.8));
   const rows = Math.max(5, Math.floor((el.clientHeight - 16) / 17));
   term.resize(cols, rows);
+  // Force full redraw to clear rendering artifacts
+  requestAnimationFrame(() => term.refresh(0, term.rows - 1));
   wsSend({ type: 'resize', cols, rows });
+}
+
+function clearTerm() {
+  if (!term) return;
+  term.clear();
+  term.refresh(0, term.rows - 1);
+  // Send Ctrl+L to Claude Code to redraw its UI
+  wsSend({ type: 'control', key: 'ctrl+l' });
 }
 
 function connectWs() {
