@@ -208,5 +208,5 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`   Found ${sessions.length} screen session(s):`);
   sessions.forEach(s => console.log(`     ${s.name} (${s.state})`));
   if (sessions.length === 0) console.log(`     (none – start your screen sessions first)`);
-  console.log(`\n   Connect: https://afferent.lab\n`);
+  console.log(`\n   Connect: https://synapse.kernow.io\n`);
 });

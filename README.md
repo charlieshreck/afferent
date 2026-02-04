@@ -8,7 +8,7 @@ Mobile PWA for accessing Claude Code screen sessions from your Android phone wit
 
 ```
 Android Phone (Gboard swipe typing)
-  -> https://afferent.lab
+  -> https://synapse.kernow.io
   -> AdGuard DNS rewrite -> OPNsense LAN IP
   -> Caddy (TLS termination, reverse proxy)
   -> Debian LXC:3456 (Node.js WebSocket server)
@@ -60,7 +60,7 @@ systemctl enable --now afferent
 
 ### 4. AdGuard DNS Rewrite (OPNsense)
 
-- Domain: `afferent.lab`
+- Domain: `synapse.kernow.io`
 - Answer: `10.10.0.1` (OPNsense LAN IP where Caddy runs)
 
 ### 5. Caddy Reverse Proxy (OPNsense)
@@ -68,7 +68,7 @@ systemctl enable --now afferent
 Add to Caddyfile:
 
 ```
-afferent.lab {
+synapse.kernow.io {
     reverse_proxy <DEBIAN-LXC-IP>:3456
     tls internal
 }
@@ -82,7 +82,7 @@ afferent.lab {
 
 ### 7. Install PWA
 
-1. Open `https://afferent.lab` in Chrome on Android
+1. Open `https://synapse.kernow.io` in Chrome on Android
 2. Enter your auth token
 3. Chrome menu -> Add to Home screen
 4. Launch from home screen
