@@ -75,9 +75,20 @@ function attachToSession(sessionName) {
 
   const session = {
     pty: term,
-    clients: new Set(),
+    clients: new Map(), // Map<ws, {cols, rows}>
     buffer: [],
     bufferMaxChars: 80000
+  };
+
+  // Recalculate PTY size based on all connected clients (use max dimensions)
+  session.recalcSize = function() {
+    let maxCols = 80, maxRows = 24;
+    for (const size of this.clients.values()) {
+      if (size.cols > maxCols) maxCols = size.cols;
+      if (size.rows > maxRows) maxRows = size.rows;
+    }
+    this.pty.resize(maxCols, maxRows);
+    console.log(`PTY resized to ${maxCols}x${maxRows} (${this.clients.size} clients)`);
   };
 
   let bufferLen = 0;
@@ -89,7 +100,7 @@ function attachToSession(sessionName) {
     while (bufferLen > session.bufferMaxChars && session.buffer.length > 1) {
       bufferLen -= session.buffer.shift().length;
     }
-    for (const client of session.clients) {
+    for (const client of session.clients.keys()) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ type: 'output', data }));
       }
@@ -98,7 +109,7 @@ function attachToSession(sessionName) {
 
   term.onExit(({ exitCode }) => {
     console.log(`PTY for ${sessionName} exited (code ${exitCode})`);
-    for (const client of session.clients) {
+    for (const client of session.clients.keys()) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ type: 'session_ended', session: sessionName }));
       }
@@ -159,11 +170,13 @@ wss.on('connection', (ws, req) => {
       case 'attach': {
         console.log('Attaching to session:', msg.session);
         if (currentSession && activePtys.has(currentSession)) {
-          activePtys.get(currentSession).clients.delete(ws);
+          const oldSession = activePtys.get(currentSession);
+          oldSession.clients.delete(ws);
+          oldSession.recalcSize();
         }
         try {
           const session = attachToSession(msg.session);
-          session.clients.add(ws);
+          session.clients.set(ws, { cols: 80, rows: 24 }); // Default size until resize msg
           currentSession = msg.session;
           if (session.buffer.length > 0) {
             ws.send(JSON.stringify({ type: 'buffer', data: session.buffer.join('') }));
@@ -193,7 +206,10 @@ wss.on('connection', (ws, req) => {
       }
       case 'resize': {
         const s = activePtys.get(currentSession);
-        if (s && msg.cols > 0 && msg.rows > 0) s.pty.resize(msg.cols, msg.rows);
+        if (s && msg.cols > 0 && msg.rows > 0) {
+          s.clients.set(ws, { cols: msg.cols, rows: msg.rows });
+          s.recalcSize(); // Recalculate based on all clients
+        }
         break;
       }
       case 'list': {
@@ -205,7 +221,11 @@ wss.on('connection', (ws, req) => {
 
   ws.on('close', () => {
     if (currentSession && activePtys.has(currentSession)) {
-      activePtys.get(currentSession).clients.delete(ws);
+      const session = activePtys.get(currentSession);
+      session.clients.delete(ws);
+      if (session.clients.size > 0) {
+        session.recalcSize(); // Recalculate for remaining clients
+      }
     }
   });
 });
