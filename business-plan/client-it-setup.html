@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Afferentic — Client IT Setup Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cg transform='translate(2,2)'%3E%3Ccircle cx='11' cy='13' r='11' fill='none' stroke='%23c9a84c' stroke-width='2'/%3E%3Ccircle cx='11' cy='13' r='8.5' fill='none' stroke='%23c9a84c' stroke-width='0.5' opacity='0.4'/%3E%3Cline x1='3' y1='13' x2='8' y2='13' stroke='%23c9a84c' stroke-width='0.5'/%3E%3Cline x1='14' y1='13' x2='19' y2='13' stroke='%23c9a84c' stroke-width='0.5'/%3E%3Cline x1='11' y1='5' x2='11' y2='10' stroke='%23c9a84c' stroke-width='0.5'/%3E%3Cline x1='11' y1='16' x2='11' y2='21' stroke='%23c9a84c' stroke-width='0.5'/%3E%3Ccircle cx='11' cy='13' r='1' fill='%23c9a84c'/%3E%3Cpath d='M22,2 L22,22 Q22,24 24,24' stroke='%23d4cfc4' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+/* ================================================================
+   BRAND TOKENS
+   ================================================================ */
+:root {
+  --color-canvas: #0C1713;
+  --color-surface: #142420;
+  --color-elevated: #1E332D;
+  --color-accent: #B8942A;
+  --color-accent-light: #D4B04A;
+  --color-accent-dim: #8A6F1F;
+  --color-accent-glow: rgba(184, 148, 42, 0.08);
+  --color-text-primary: #F0EDE6;
+  --color-text-secondary: #A09B8E;
+  --color-text-muted: #6B6760;
+  --glass-bg: rgba(240, 237, 230, 0.04);
+  --glass-border: rgba(240, 237, 230, 0.08);
+  --glass-hover: rgba(240, 237, 230, 0.07);
+  --color-success: #7D9B76;
+  --color-warning: #C9A84C;
+  --color-error: #B85C5C;
+  --font-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-body: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+  --radius-card: 16px;
+  --radius-button: 12px;
+  --radius-input: 12px;
+}
+
+/* ================================================================
+   RESET & BASE
+   ================================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 4.5rem; }
+body {
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background: var(--color-canvas);
+  min-height: 100vh;
+}
+
+/* ================================================================
+   AMBIENT GLOW
+   ================================================================ */
+body::before {
+  content: '';
+  position: fixed;
+  top: -20%; right: -10%;
+  width: 60vw; height: 60vh;
+  background: radial-gradient(ellipse at center, rgba(184,148,42,0.06) 0%, rgba(30,51,45,0.08) 40%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: drift 28s ease-in-out infinite alternate;
+}
+@keyframes drift {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-5vw, 8vh); }
+}
+
+/* ================================================================
+   TYPOGRAPHY
+   ================================================================ */
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; }
+h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
+h2 { font-size: 1.7rem; margin-bottom: 0.75rem; color: var(--color-text-primary); }
+h3 { font-size: 1.3rem; margin-bottom: 0.5rem; color: var(--color-text-primary); }
+h4 { font-family: var(--font-body); font-weight: 500; font-size: 1rem; margin-bottom: 0.5rem; color: var(--color-text-primary); }
+p { margin-bottom: 0.75rem; }
+.section-label {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 0.5rem;
+}
+
+/* ================================================================
+   HEADER
+   ================================================================ */
+.header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(12, 23, 19, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 0 1.5rem;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-left { display: flex; align-items: center; gap: 1rem; }
+.wordmark { display:flex; align-items:flex-end; gap:0.15rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--color-accent);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+.header-subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 300;
+}
+.header-actions { display: flex; align-items: center; gap: 0.75rem; }
+
+/* ================================================================
+   SIDEBAR
+   ================================================================ */
+.sidebar {
+  position: fixed;
+  top: 3.5rem; left: 0;
+  width: 13rem;
+  height: calc(100vh - 3.5rem);
+  overflow-y: auto;
+  background: rgba(12, 23, 19, 0.95);
+  border-right: 1px solid var(--glass-border);
+  z-index: 90;
+  padding: 1.25rem 0;
+}
+.nav-group-label {
+  padding: 0 1rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+  margin-top: 0.75rem;
+}
+.nav-group-label:first-child { margin-top: 0; }
+.site-nav {
+  background: rgba(12, 23, 19, 0.8);
+  padding: 0.75rem 1rem 0.6rem;
+  border-bottom: 1px solid rgba(184,148,42,0.15);
+  margin-bottom: 0.5rem;
+}
+.site-nav-logo { display: block; margin-bottom: 0.5rem; }
+.site-nav-logo svg { height: 1.2rem; width: auto; }
+.site-nav-links { display: flex; flex-direction: column; gap: 0.1rem; }
+.site-nav-links a {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  padding: 0.15rem 0;
+  transition: color 0.2s;
+}
+.site-nav-links a:hover { color: var(--color-accent-light); }
+.site-nav-links a.current { color: var(--color-accent); font-weight: 500; }
+.nav-link {
+  display: block;
+  padding: 0.3rem 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.nav-link:hover { color: var(--color-accent); border-left-color: rgba(184,148,42,0.3); }
+.nav-link.active { color: var(--color-accent); border-left-color: var(--color-accent); background: var(--color-accent-glow); }
+.nav-divider { height: 1px; background: linear-gradient(to right, transparent, rgba(184,148,42,0.15), transparent); margin: 0.75rem 1rem; }
+.nav-cross {
+  display: block;
+  padding: 0.3rem 1rem;
+  color: var(--color-accent-dim);
+  font-size: 0.78rem;
+  font-weight: 400;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-cross:hover { color: var(--color-accent-light); }
+
+/* ================================================================
+   LAYOUT
+   ================================================================ */
+.main { margin-left: 13rem; padding: 4.5rem 2rem 4rem; position: relative; z-index: 1; max-width: 960px; }
+
+/* ================================================================
+   CARDS
+   ================================================================ */
+.card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.4s;
+}
+.card:hover { border-color: rgba(240, 237, 230, 0.12); }
+.card h3 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--color-text-primary);
+  margin-bottom: 1rem;
+}
+
+/* ================================================================
+   CALLOUTS
+   ================================================================ */
+.callout {
+  background: rgba(184,148,42,0.06);
+  border-left: 3px solid var(--color-accent);
+  padding: 1rem 1.25rem;
+  border-radius: 0 var(--radius-card) var(--radius-card) 0;
+  margin-bottom: 1rem;
+}
+.callout strong { color: var(--color-accent-light); }
+.callout p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  background: rgba(184,148,42,0.08);
+  border: 1px solid rgba(184,148,42,0.2);
+  border-radius: var(--radius-card);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+.highlight-box strong { color: var(--color-accent-light); }
+.highlight-box h4 { margin-bottom: 0.5rem; }
+.highlight-box ul { margin-top: 0.25rem; }
+
+/* ================================================================
+   SECTION BREAKS
+   ================================================================ */
+.section-break {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(184,148,42,0.15), transparent);
+  margin: 2.5rem 0;
+}
+
+/* ================================================================
+   LIST STYLES
+   ================================================================ */
+ul, ol { padding-left: 1.25rem; margin-bottom: 0.75rem; }
+li { margin-bottom: 0.35rem; color: var(--color-text-secondary); }
+li strong { color: var(--color-text-primary); font-weight: 500; }
+
+/* ================================================================
+   STEP STYLING
+   ================================================================ */
+.step {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(240,237,230,0.04);
+}
+.step:last-child { border-bottom: none; }
+.step-num {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(184,148,42,0.15);
+  border: 1px solid rgba(184,148,42,0.3);
+  border-radius: 50%;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--color-accent-light);
+}
+.step-body { flex: 1; min-width: 0; }
+.step-body strong { color: var(--color-text-primary); font-weight: 500; }
+.step-body p { font-size: 0.92rem; }
+
+/* ================================================================
+   BUTTONS
+   ================================================================ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 0.65rem 1.5rem;
+  border-radius: var(--radius-button);
+  border: 1px solid rgba(184,148,42,0.4);
+  background: rgba(184,148,42,0.15);
+  color: var(--color-accent-light);
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+.btn:hover { background: rgba(184,148,42,0.25); border-color: rgba(184,148,42,0.6); }
+.btn-secondary {
+  background: var(--glass-bg);
+  border-color: rgba(240,237,230,0.10);
+  color: var(--color-text-primary);
+}
+.btn-secondary:hover { background: var(--glass-hover); border-color: rgba(240,237,230,0.15); }
+.btn-xs { font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 8px; }
+
+/* ================================================================
+   PRINT STYLES
+   ================================================================ */
+@media print {
+  body {
+    background: #fff !important;
+    color: #1a1a1a !important;
+    font-size: 10pt;
+  }
+  body::before { display: none; }
+  .header, .sidebar, .no-print, .print-hide, .mobile-nav-btn { display: none !important; }
+  .main { margin-left: 0 !important; padding-top: 0.5cm !important; max-width: 100%; }
+  .card { background: #fff !important; border: 1px solid #ddd !important; break-inside: avoid; }
+  .callout { background: #f8f7f4 !important; border-left-color: #8A6F1F !important; }
+  .highlight-box { background: #f8f7f4 !important; border-color: #ccc !important; }
+  h1, h2, h3, h4 { color: #0C1713 !important; }
+  p, span, td, th, li, div { color: #1a1a1a !important; }
+  .callout strong, .highlight-box strong { color: #8A6F1F !important; }
+  .section-label { color: #8A6F1F !important; }
+  @page { margin: 1.5cm; }
+  .print-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 1cm;
+    font-family: var(--font-display);
+    font-size: 18pt;
+    color: #0C1713 !important;
+  }
+}
+.print-header { display: none; }
+
+/* ================================================================
+   MOBILE
+   ================================================================ */
+.mobile-nav-btn {
+  display: none;
+  position: fixed;
+  top: 4rem; left: 0.75rem;
+  z-index: 95;
+  background: var(--color-surface);
+  border: 1px solid rgba(184,148,42,0.2);
+  color: var(--color-accent);
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+  .sidebar { display: none; }
+  .sidebar.mobile-open { display: block; width: 16rem; z-index: 95; }
+  .main { margin-left: 0; }
+  .mobile-nav-btn { display: block; }
+}
+
+@media (max-width: 640px) {
+  .header { padding: 0 0.75rem; }
+  .main { padding: 4.5rem 0.75rem 3rem; }
+  .header-subtitle { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header print-hide">
+  <div class="header-left">
+    <a href="/" class="wordmark"><svg style="height:2rem;width:auto;" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><g transform="translate(2,2)"><circle cx="11" cy="13" r="11" fill="none" stroke="#c9a84c" stroke-width="2"/><circle cx="11" cy="13" r="8.5" fill="none" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/><line x1="3" y1="13" x2="8" y2="13" stroke="#c9a84c" stroke-width="0.5"/><line x1="14" y1="13" x2="19" y2="13" stroke="#c9a84c" stroke-width="0.5"/><line x1="11" y1="5" x2="11" y2="10" stroke="#c9a84c" stroke-width="0.5"/><line x1="11" y1="16" x2="11" y2="21" stroke="#c9a84c" stroke-width="0.5"/><circle cx="11" cy="13" r="1" fill="#c9a84c"/><path d="M22,2 L22,22 Q22,24 24,24" stroke="#d4cfc4" stroke-width="2" fill="none" stroke-linecap="round"/></g></svg></a>
+    <span class="header-subtitle">Client IT Setup Guide</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-xs btn-secondary" onclick="window.print()">Print / PDF</button>
+  </div>
+</header>
+
+<!-- Print-only header -->
+<div class="print-header">Afferentic &mdash; Client IT Setup Guide</div>
+
+<!-- SIDEBAR -->
+<button class="mobile-nav-btn print-hide" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')">Nav</button>
+<nav class="sidebar print-hide" id="sidebar">
+
+  <div class="site-nav">
+    <a href="/" class="site-nav-logo"><svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><g transform="translate(2,2)"><circle cx="11" cy="13" r="11" fill="none" stroke="#c9a84c" stroke-width="2"/><circle cx="11" cy="13" r="8.5" fill="none" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/><line x1="3" y1="13" x2="8" y2="13" stroke="#c9a84c" stroke-width="0.5"/><line x1="14" y1="13" x2="19" y2="13" stroke="#c9a84c" stroke-width="0.5"/><line x1="11" y1="5" x2="11" y2="10" stroke="#c9a84c" stroke-width="0.5"/><line x1="11" y1="16" x2="11" y2="21" stroke="#c9a84c" stroke-width="0.5"/><circle cx="11" cy="13" r="1" fill="#c9a84c"/><path d="M22,2 L22,22 Q22,24 24,24" stroke="#d4cfc4" stroke-width="2" fill="none" stroke-linecap="round"/></g></svg></a>
+    <div class="site-nav-links">
+      <a href="/how-it-works">How It Works</a>
+      <a href="/the-map">The Map</a>
+      <a href="/deliverables">Deliverables</a>
+      <a href="/financial-plan">Financials</a>
+      <a href="/go-to-market">Go-to-Market</a>
+      <a href="/competitive-landscape">Competition</a>
+      <a href="/delivery-roadmap">Roadmap</a>
+      <a href="/pricing">Calculator</a>
+      <a href="/service-management">Service Mgmt</a>
+    </div>
+  </div>
+
+  <div class="nav-group-label">This Document</div>
+  <a href="#sec-getting-started" class="nav-link active">Getting Started</a>
+  <a href="#sec-portal-access" class="nav-link">Portal Access</a>
+  <a href="#sec-m365-data" class="nav-link">M365 Data Access</a>
+  <a href="#sec-xero" class="nav-link">Xero Connection</a>
+  <a href="#sec-revoking" class="nav-link">Revoking Access</a>
+  <a href="#sec-support" class="nav-link">Support</a>
+
+  <div class="nav-divider"></div>
+  <div class="nav-group-label">Trust &amp; Access</div>
+  <a href="/client-it-setup" class="nav-cross" style="color:var(--color-accent);">IT Setup Guide</a>
+  <a href="/security-summary" class="nav-cross">Security Summary</a>
+  <a href="/security-annex" class="nav-cross">Technical Annex</a>
+
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+<!-- ============================================================
+     GETTING STARTED
+     ============================================================ -->
+<section id="sec-getting-started">
+  <p class="section-label">Client IT Setup Guide</p>
+  <h1>Getting Started with Afferentic</h1>
+  <p style="color:var(--color-text-muted);margin-bottom:1.5rem;">For your IT administrator &mdash; April 2026</p>
+
+  <div class="card">
+    <h3>Why You&rsquo;re Receiving This</h3>
+    <p>Your organisation has engaged Afferentic to help improve operational outcomes. Afferentic connects to your existing business systems &mdash; Microsoft 365, accounting software, and similar tools &mdash; to identify inefficiencies and deliver measurable improvements.</p>
+    <p>This guide walks your IT administrator through the steps required to grant Afferentic the access it needs. Each connection uses standard vendor-provided authentication (OAuth2), and you retain full control over what&rsquo;s shared at every stage.</p>
+
+    <div class="highlight-box" style="margin-top:1rem;">
+      <h4>What You&rsquo;ll Need</h4>
+      <ul>
+        <li><strong>Microsoft 365 admin access</strong> &mdash; Global Admin or Application Admin role</li>
+        <li><strong>About 10 minutes</strong> &mdash; the initial portal consent takes under 2 minutes; the rest is optional and happens later</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- ============================================================
+     PORTAL ACCESS
+     ============================================================ -->
+<section id="sec-portal-access">
+  <p class="section-label">Step 1</p>
+  <h2>Portal Access (Entra ID Consent)</h2>
+  <p>This enables your team to log into the Afferentic portal using their existing Microsoft 365 accounts. No new usernames or passwords required.</p>
+
+  <div class="card" style="padding:0.75rem 1.25rem;">
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <p><strong>Open the consent URL</strong></p>
+        <p>Your M365 Global Admin or Application Admin opens the consent link provided by Afferentic. This is a standard Microsoft Entra ID admin consent flow &mdash; the same process used by any business application that connects to Microsoft 365.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <p><strong>Review the permissions</strong></p>
+        <p>The consent screen will show the permissions Afferentic is requesting. For portal access, these are:</p>
+        <ul style="margin-top:0.5rem;">
+          <li><strong>openid</strong> &mdash; confirms identity (lets us verify the user is who they say they are)</li>
+          <li><strong>profile</strong> &mdash; reads the user&rsquo;s display name</li>
+          <li><strong>email</strong> &mdash; reads the user&rsquo;s email address</li>
+        </ul>
+        <div class="callout" style="margin-top:0.75rem;">
+          <p><strong>What we see:</strong> your name and email address. That&rsquo;s it.</p>
+          <p><strong>What we do NOT see:</strong> your files, emails, calendar, contacts, Teams messages, or anything else in your Microsoft 365 environment.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <p><strong>Click &ldquo;Accept&rdquo;</strong></p>
+        <p>Once the admin clicks Accept, the consent is granted for the entire tenant. Your users can now log into <strong>app.afferentic.com</strong> using their existing Microsoft 365 credentials.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <p><strong>Verify access</strong></p>
+        <p>Any user in your tenant can now sign in to the Afferentic portal. No additional accounts, licences, or configuration needed. Users authenticate through your own Entra ID &mdash; your existing MFA policies apply automatically.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- ============================================================
+     M365 DATA ACCESS
+     ============================================================ -->
+<section id="sec-m365-data">
+  <p class="section-label">Step 2 (During Engagement)</p>
+  <h2>M365 Data Access</h2>
+  <p>This is <strong>separate from portal access</strong> and is only requested during the Map or Make engagement &mdash; not at signup. Your admin will receive a second consent prompt with these additional permissions.</p>
+
+  <div class="card">
+    <h3>Permissions Explained</h3>
+
+    <div class="step">
+      <div class="step-num" style="width:auto;height:auto;border-radius:var(--radius-input);padding:0.15rem 0.6rem;font-size:0.75rem;">Mail</div>
+      <div class="step-body">
+        <p><strong>Mail.Read</strong></p>
+        <p>Allows Afferentic to read email metadata and content for inbox analysis &mdash; identifying communication patterns, response times, and bottlenecks. We analyse patterns in aggregate; we don&rsquo;t read individual emails for content unless specifically agreed in writing.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="width:auto;height:auto;border-radius:var(--radius-input);padding:0.15rem 0.6rem;font-size:0.75rem;">Files</div>
+      <div class="step-body">
+        <p><strong>Files.Read</strong></p>
+        <p>Allows Afferentic to read documents in OneDrive and SharePoint &mdash; understanding document workflows, naming conventions, version control practices, and where information lives. We look at structure and usage patterns, not the content of private documents.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="width:auto;height:auto;border-radius:var(--radius-input);padding:0.15rem 0.6rem;font-size:0.75rem;">Users</div>
+      <div class="step-body">
+        <p><strong>Users.Read.All</strong></p>
+        <p>Allows Afferentic to read the organisation directory &mdash; understanding team structure, reporting lines, and licence allocation. This helps identify collaboration patterns and unused software licences.</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:1rem;">
+      <p><strong>You can review and revoke any permission at any time</strong> from your Microsoft 365 admin portal under Enterprise Applications &rarr; Afferentic &rarr; Permissions.</p>
+    </div>
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- ============================================================
+     XERO CONNECTION
+     ============================================================ -->
+<section id="sec-xero">
+  <p class="section-label">Step 3 (If Applicable)</p>
+  <h2>Xero Connection</h2>
+  <p>During the Map engagement, if financial analysis is part of the agreed scope, Afferentic will request a connection to your Xero account.</p>
+
+  <div class="card">
+    <h3>How It Works</h3>
+    <ul>
+      <li><strong>OAuth2 authentication</strong> &mdash; you sign in directly with Xero. Afferentic never sees your Xero password.</li>
+      <li><strong>Read access only</strong> &mdash; Afferentic can read your chart of accounts, invoices, contacts, and bank transactions.</li>
+      <li><strong>No payment capability</strong> &mdash; Afferentic cannot create, modify, or authorise any payments or transactions.</li>
+      <li><strong>Disconnect at any time</strong> &mdash; revoke access instantly from Xero&rsquo;s Settings &rarr; Connected Apps page.</li>
+    </ul>
+
+    <div class="callout" style="margin-top:0.75rem;">
+      <p><strong>We access your accounting software, not your bank.</strong> The Xero connection lets us analyse invoicing patterns, payment cycles, and financial workflows. We never have access to your bank credentials, and we cannot move money.</p>
+    </div>
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- ============================================================
+     REVOKING ACCESS
+     ============================================================ -->
+<section id="sec-revoking">
+  <p class="section-label">Control</p>
+  <h2>Revoking Access</h2>
+  <p>You retain full control over every connection. Here&rsquo;s how to remove access at any time.</p>
+
+  <div class="card">
+    <h4>Portal Access</h4>
+    <p>Open your Microsoft 365 admin portal &rarr; <strong>Enterprise Applications</strong> &rarr; find <strong>Afferentic</strong> &rarr; click <strong>Delete</strong>. This immediately revokes all users&rsquo; ability to sign into the Afferentic portal.</p>
+
+    <div class="section-break" style="margin:1.25rem 0;"></div>
+
+    <h4>M365 Data Permissions</h4>
+    <p>Same location: Enterprise Applications &rarr; Afferentic &rarr; <strong>Permissions</strong>. You can revoke specific permissions individually or remove the entire application.</p>
+
+    <div class="section-break" style="margin:1.25rem 0;"></div>
+
+    <h4>Xero</h4>
+    <p>Open Xero &rarr; <strong>Settings</strong> &rarr; <strong>Connected Apps</strong> &rarr; find <strong>Afferentic</strong> &rarr; click <strong>Disconnect</strong>.</p>
+
+    <div class="section-break" style="margin:1.25rem 0;"></div>
+
+    <h4>On Exit</h4>
+    <p>When your engagement with Afferentic ends, we purge all client data within <strong>30 days</strong>. You receive written confirmation that all data has been deleted, all credentials have been rotated, and no copies are retained.</p>
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- ============================================================
+     SUPPORT
+     ============================================================ -->
+<section id="sec-support">
+  <p class="section-label">Help</p>
+  <h2>Support</h2>
+
+  <div class="card">
+    <h4>General Support</h4>
+    <p>For questions about setup, permissions, or anything else in this guide:</p>
+    <p style="margin-bottom:1.25rem;"><strong style="color:var(--color-accent-light);">support@afferentic.com</strong></p>
+
+    <h4>Security Concerns</h4>
+    <p>For urgent security concerns &mdash; suspected breach, unexpected access, or anything that feels wrong:</p>
+    <p style="margin-bottom:0.5rem;"><strong style="color:var(--color-accent-light);">security@afferentic.com</strong></p>
+    <p style="color:var(--color-text-muted);font-size:0.9rem;">1-hour response commitment during business hours. 4-hour response outside business hours.</p>
+  </div>
+
+  <div style="margin-top:2rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+    <a href="/security-summary" class="btn">Security Summary</a>
+    <a href="/security-annex" class="btn btn-secondary">Technical Security Annex</a>
+    <a href="/" class="btn btn-secondary">Back to Index</a>
+  </div>
+</section>
+
+</main>
+</body>
+</html>
