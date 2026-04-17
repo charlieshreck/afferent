@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Afferentic — Approval-in-the-Loop Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   BRAND TOKENS
+   ================================================================ */
+:root {
+  --color-canvas: #F0EDE6;
+  --color-surface: #111f19;
+  --color-elevated: #1a2a22;
+  --color-accent: #C2A24D;
+  --color-accent-light: #D9C472;
+  --color-accent-dim: #927A39;
+  --color-accent-glow: rgba(184, 148, 42, 0.08);
+  --color-text-primary: #0C1713;
+  --color-text-secondary: #A09B8E;
+  --color-text-muted: #6B6760;
+  --glass-bg: rgba(12, 23, 19, 0.04);
+  --glass-border: rgba(12, 23, 19, 0.08);
+  --glass-hover: rgba(12, 23, 19, 0.07);
+  --color-success: #7D9B76;
+  --color-warning: #C9A84C;
+  --color-error: #B85C5C;
+  --font-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-body: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+  --radius-card: 16px;
+  --radius-button: 12px;
+  --radius-input: 12px;
+}
+
+/* ================================================================
+   RESET & BASE
+   ================================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 4.5rem; }
+body {
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background: var(--color-canvas);
+  min-height: 100vh;
+}
+
+/* ================================================================
+   AMBIENT GLOW
+   ================================================================ */
+body::before {
+  content: '';
+  position: fixed;
+  top: -20%; right: -10%;
+  width: 60vw; height: 60vh;
+  background: radial-gradient(ellipse at center, rgba(194,162,77,0.06) 0%, rgba(26,42,34,0.08) 40%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: drift 28s ease-in-out infinite alternate;
+}
+@keyframes drift {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-5vw, 8vh); }
+}
+
+/* ================================================================
+   TYPOGRAPHY
+   ================================================================ */
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; }
+h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
+h2 { font-size: 1.7rem; margin-bottom: 0.75rem; color: var(--color-text-primary); }
+h3 { font-size: 1.3rem; margin-bottom: 0.5rem; color: var(--color-text-primary); }
+h4 { font-family: var(--font-body); font-weight: 500; font-size: 1rem; margin-bottom: 0.5rem; color: var(--color-text-primary); }
+p { margin-bottom: 0.75rem; }
+.section-label {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 0.5rem;
+}
+
+/* ================================================================
+   HEADER
+   ================================================================ */
+.header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(12, 23, 19, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 0 1.5rem;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-left { display: flex; align-items: center; gap: 1rem; }
+.wordmark { display:flex; align-items:flex-end; gap:0.15rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--color-accent);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+.header-subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 300;
+}
+.header-actions { display: flex; align-items: center; gap: 0.75rem; }
+
+/* ================================================================
+   SIDEBAR
+   ================================================================ */
+.sidebar {
+  position: fixed;
+  top: 3.5rem; left: 0;
+  width: 13rem;
+  height: calc(100vh - 3.5rem);
+  overflow-y: auto;
+  background: rgba(12, 23, 19, 0.95);
+  border-right: 1px solid var(--glass-border);
+  z-index: 90;
+  padding: 1.25rem 0;
+}
+.nav-group-label {
+  padding: 0 1rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+  margin-top: 0.75rem;
+}
+.nav-group-label:first-child { margin-top: 0; }
+
+/* ================================================================
+   SITE NAVIGATION
+   ================================================================ */
+.site-nav {
+  background: rgba(12, 23, 19, 0.8);
+  padding: 0.75rem 1rem 0.6rem;
+  border-bottom: 1px solid rgba(194,162,77,0.15);
+  margin-bottom: 0.5rem;
+}
+.site-nav-logo {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.site-nav-logo svg {
+  height: 1.2rem;
+  width: auto;
+}
+.site-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.site-nav-links a {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  padding: 0.15rem 0;
+  transition: color 0.2s;
+}
+.site-nav-links a:hover {
+  color: var(--color-accent-light);
+}
+.site-nav-links a.current {
+  color: var(--color-accent);
+  font-weight: 500;
+}
+.nav-link {
+  display: block;
+  padding: 0.3rem 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.nav-link:hover { color: var(--color-accent); border-left-color: rgba(194,162,77,0.3); }
+.nav-link.active { color: var(--color-accent); border-left-color: var(--color-accent); background: var(--color-accent-glow); }
+.nav-divider { height: 1px; background: linear-gradient(to right, transparent, rgba(194,162,77,0.15), transparent); margin: 0.75rem 1rem; }
+.nav-cross {
+  display: block;
+  padding: 0.3rem 1rem;
+  color: var(--color-accent-dim);
+  font-size: 0.78rem;
+  font-weight: 400;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-cross:hover { color: var(--color-accent-light); }
+.nav-download {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.3rem 0.75rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-accent-light);
+  background: rgba(194,162,77,0.1);
+  border: 1px solid rgba(194,162,77,0.25);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.nav-download:hover { background: rgba(194,162,77,0.2); border-color: rgba(194,162,77,0.4); }
+
+/* ================================================================
+   LAYOUT
+   ================================================================ */
+.main { margin-left: 13rem; padding: 4.5rem 2rem 4rem; position: relative; z-index: 1; max-width: 960px; }
+
+/* ================================================================
+   CARDS
+   ================================================================ */
+.card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.4s;
+}
+.card:hover { border-color: rgba(12, 23, 19, 0.12); }
+.card h3 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--color-text-primary);
+  margin-bottom: 1rem;
+}
+
+/* ================================================================
+   TABLES
+   ================================================================ */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+.data-table th {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  background: rgba(194,162,77,0.1);
+  border: 1px solid rgba(194,162,77,0.15);
+  color: var(--color-accent-light);
+  font-weight: 500;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.data-table td {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--glass-border);
+  vertical-align: top;
+}
+.data-table tr:hover td { background: rgba(12,23,19,0.02); }
+.data-table .price { font-weight: 500; color: var(--color-accent-light); white-space: nowrap; }
+
+/* ================================================================
+   VALUE CALLOUTS
+   ================================================================ */
+.callout {
+  background: rgba(194,162,77,0.06);
+  border-left: 3px solid var(--color-accent);
+  padding: 1rem 1.25rem;
+  border-radius: 0 var(--radius-card) var(--radius-card) 0;
+  margin-bottom: 1rem;
+}
+.callout strong { color: var(--color-accent-light); }
+.callout p:last-child { margin-bottom: 0; }
+
+.highlight-box {
+  background: rgba(194,162,77,0.08);
+  border: 1px solid rgba(194,162,77,0.2);
+  border-radius: var(--radius-card);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+.highlight-box strong { color: var(--color-accent-light); }
+
+/* ================================================================
+   SECTION BREAKS
+   ================================================================ */
+.section-break {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(194,162,77,0.15), transparent);
+  margin: 2.5rem 0;
+}
+
+/* ================================================================
+   LIST STYLES
+   ================================================================ */
+ul, ol { padding-left: 1.25rem; margin-bottom: 0.75rem; }
+li { margin-bottom: 0.35rem; color: var(--color-text-secondary); }
+li strong { color: var(--color-text-primary); font-weight: 500; }
+
+/* ================================================================
+   THREE-COLUMN TIER CARDS
+   ================================================================ */
+.tier-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.tier-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: 1.25rem;
+  transition: border-color 0.4s;
+}
+.tier-card:hover { border-color: rgba(12,23,19,0.12); }
+.tier-card h4 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--color-accent-light);
+  margin-bottom: 0.5rem;
+}
+.tier-card p { font-size: 0.9rem; color: var(--color-text-secondary); }
+.tier-card .tier-example {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--glass-border);
+  margin-bottom: 0;
+}
+
+/* ================================================================
+   SECTOR CARDS
+   ================================================================ */
+.sector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.sector-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: 1rem;
+  text-align: center;
+  transition: border-color 0.4s;
+}
+.sector-card:hover { border-color: rgba(194,162,77,0.25); }
+.sector-card h4 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  margin-bottom: 0.25rem;
+}
+.sector-card p {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0;
+}
+
+/* ================================================================
+   FUNNEL
+   ================================================================ */
+.funnel { margin-bottom: 1.25rem; }
+.funnel-step {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.25rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+}
+.funnel-step .step-num {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--color-accent);
+  min-width: 2rem;
+  text-align: center;
+}
+.funnel-step .step-content { flex: 1; }
+.funnel-step .step-content h4 { margin-bottom: 0.15rem; }
+.funnel-step .step-content p { margin-bottom: 0; font-size: 0.88rem; color: var(--color-text-secondary); }
+.funnel-step .step-price { font-weight: 500; color: var(--color-accent-light); white-space: nowrap; }
+
+/* ================================================================
+   TIMELINE (LEARNING ENGINE)
+   ================================================================ */
+.learning-timeline { margin-bottom: 1.25rem; }
+.learning-step {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(12,23,19,0.04);
+}
+.learning-step:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.learning-period {
+  font-weight: 500;
+  color: var(--color-accent);
+  font-size: 0.85rem;
+  padding-top: 0.1rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+.learning-content h4 { margin-bottom: 0.2rem; }
+.learning-content p { margin-bottom: 0; font-size: 0.9rem; color: var(--color-text-secondary); }
+
+/* ================================================================
+   ARCHITECTURE DIAGRAMS
+   ================================================================ */
+.arch-diagram {
+  background: rgba(14, 26, 20, 0.7);
+  border: 1px solid rgba(194,162,77,0.15);
+  border-radius: var(--radius-card);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+}
+
+.arch-zone {
+  background: var(--color-surface);
+  border: 1px solid rgba(194,162,77,0.2);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+.arch-zone:last-child { margin-bottom: 0; }
+
+.arch-zone-label {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--color-accent-light);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.arch-zone-label .zone-tag {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: rgba(12,23,19,0.06);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.arch-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.arch-node {
+  background: rgba(12,23,19,0.04);
+  border: 1px solid rgba(12,23,19,0.08);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  transition: border-color 0.3s;
+}
+.arch-node:hover { border-color: rgba(194,162,77,0.3); }
+.arch-node strong { color: var(--color-text-primary); font-weight: 500; display: block; margin-bottom: 0.15rem; }
+.arch-node span { font-size: 0.72rem; color: var(--color-text-muted); }
+
+.arch-node.accent {
+  border-color: rgba(194,162,77,0.25);
+  background: rgba(194,162,77,0.06);
+}
+.arch-node.accent strong { color: var(--color-accent-light); }
+
+.arch-connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0;
+  position: relative;
+}
+.arch-connector::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, rgba(194,162,77,0.4), rgba(194,162,77,0.15));
+}
+.arch-connector-label {
+  background: var(--color-canvas);
+  border: 1px solid rgba(194,162,77,0.2);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--color-accent);
+  z-index: 1;
+  white-space: nowrap;
+}
+
+/* Namespace diagram */
+.namespace-diagram {
+  background: var(--color-surface);
+  border: 1px solid rgba(194,162,77,0.2);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.namespace-header {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--color-accent-light);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(194,162,77,0.15);
+}
+.namespace-group {
+  margin-bottom: 0.75rem;
+}
+.namespace-group-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+  padding-left: 0.25rem;
+}
+.namespace-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.4rem;
+}
+.namespace-item {
+  background: rgba(12,23,19,0.04);
+  border: 1px solid rgba(12,23,19,0.06);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+}
+.namespace-item strong { color: var(--color-text-primary); font-weight: 500; }
+.namespace-item.security {
+  border-color: rgba(184,92,92,0.2);
+  background: rgba(184,92,92,0.04);
+}
+.namespace-item.security strong { color: var(--color-error); }
+.namespace-item.accent {
+  border-color: rgba(194,162,77,0.2);
+  background: rgba(194,162,77,0.04);
+}
+.namespace-item.accent strong { color: var(--color-accent-light); }
+
+/* Agent hierarchy */
+.agent-tree { margin-bottom: 1.25rem; }
+.agent-root {
+  background: var(--color-surface);
+  border: 1px solid rgba(194,162,77,0.25);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0;
+}
+.agent-root-label {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--color-accent-light);
+  margin-bottom: 0.75rem;
+}
+.agent-branches {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.75rem;
+}
+.agent-branch {
+  background: rgba(14, 26, 20, 0.6);
+  border: 1px solid rgba(12,23,19,0.08);
+  border-radius: 10px;
+  padding: 1rem;
+  border-top: 2px solid rgba(194,162,77,0.3);
+}
+.agent-branch h4 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+.agent-branch ul {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+.agent-branch ul li {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  padding: 0.15rem 0;
+  padding-left: 0.75rem;
+  position: relative;
+}
+.agent-branch ul li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(194,162,77,0.4);
+}
+
+/* Security layers */
+.security-stack { margin-bottom: 1.25rem; }
+.security-layer {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: 0.35rem;
+}
+.security-layer-num {
+  min-width: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--color-accent);
+  background: rgba(194,162,77,0.08);
+  border: 1px solid rgba(194,162,77,0.15);
+  border-radius: 8px 0 0 8px;
+  border-right: none;
+}
+.security-layer-content {
+  flex: 1;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 0 8px 8px 0;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.security-layer-content h4 {
+  font-size: 0.88rem;
+  color: var(--color-text-primary);
+  margin-bottom: 0;
+  min-width: 100px;
+}
+.security-layer-content p {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0;
+}
+
+/* Routing tree */
+.routing-tree { margin-bottom: 1.25rem; }
+.routing-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 120px;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.25rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+}
+.routing-row .route-label { font-size: 0.88rem; color: var(--color-text-primary); }
+.routing-row .route-label span { color: var(--color-text-muted); font-size: 0.78rem; }
+.routing-row .route-pct {
+  font-weight: 500;
+  color: var(--color-accent);
+  text-align: center;
+  font-size: 0.88rem;
+}
+.routing-row .route-cost {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  text-align: right;
+}
+
+/* Portal mock */
+.portal-mock {
+  background: var(--color-surface);
+  border: 1px solid rgba(194,162,77,0.2);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.portal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(12,23,19,0.06);
+}
+.portal-header h4 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  margin-bottom: 0;
+}
+.portal-status {
+  display: flex;
+  gap: 0.5rem;
+}
+.portal-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.portal-dot.green { background: var(--color-success); }
+.portal-dot.amber { background: var(--color-warning); }
+.portal-dot.red { background: var(--color-error); }
+.portal-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+}
+.portal-item {
+  background: rgba(12,23,19,0.03);
+  border: 1px solid rgba(12,23,19,0.06);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+.portal-item h5 {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 0.35rem;
+}
+.portal-item p {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0;
+}
+.portal-item .big-value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--color-accent-light);
+}
+
+/* Flow diagram */
+.flow-diagram { margin-bottom: 1.25rem; }
+.flow-step {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  position: relative;
+}
+.flow-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: calc(1rem - 1px);
+  top: 1.5rem;
+  bottom: 0;
+  width: 2px;
+  background: rgba(194,162,77,0.2);
+}
+.flow-num {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(194,162,77,0.12);
+  border: 1px solid rgba(194,162,77,0.25);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  color: var(--color-accent);
+  z-index: 1;
+}
+.flow-content h4 { margin-bottom: 0.1rem; font-size: 0.92rem; }
+.flow-content p { margin-bottom: 0; font-size: 0.85rem; color: var(--color-text-secondary); }
+
+/* Universal pattern */
+.pattern-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.pattern-box {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 0.75rem 1.25rem;
+  text-align: center;
+}
+.pattern-box h4 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  margin-bottom: 0.15rem;
+}
+.pattern-box p {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0;
+}
+.pattern-box.accent {
+  border-color: rgba(194,162,77,0.25);
+  background: rgba(194,162,77,0.06);
+}
+.pattern-box.accent h4 { color: var(--color-accent-light); }
+.pattern-arrow {
+  font-size: 1.5rem;
+  color: var(--color-accent);
+  padding: 0 0.75rem;
+  font-family: var(--font-display);
+}
+
+/* Data guarantee */
+.guarantee-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.guarantee-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: 1.25rem;
+}
+.guarantee-card h4 {
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+.guarantee-card ul { margin-bottom: 0; }
+.guarantee-card.negative {
+  border-color: rgba(184,92,92,0.15);
+}
+.guarantee-card.negative h4 { color: var(--color-error); }
+
+/* Review items */
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.review-item {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+.review-item h4 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+  margin-bottom: 0.2rem;
+}
+.review-item p {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0;
+}
+
+/* ================================================================
+   BUTTONS
+   ================================================================ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 0.65rem 1.5rem;
+  border-radius: var(--radius-button);
+  border: 1px solid rgba(194,162,77,0.4);
+  background: rgba(194,162,77,0.15);
+  color: var(--color-accent-light);
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+.btn:hover { background: rgba(194,162,77,0.25); border-color: rgba(194,162,77,0.6); }
+.btn-secondary {
+  background: var(--glass-bg);
+  border-color: rgba(12,23,19,0.10);
+  color: var(--color-text-primary);
+}
+.btn-secondary:hover { background: var(--glass-hover); border-color: rgba(12,23,19,0.15); }
+.btn-xs { font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 8px; }
+
+/* ================================================================
+   PRINT STYLES
+   ================================================================ */
+@media print {
+  body {
+    background: #fff !important;
+    color: #1a1a1a !important;
+    font-size: 10pt;
+  }
+  body::before { display: none; }
+  .header, .sidebar, .no-print, .print-hide, .mobile-nav-btn { display: none !important; }
+  .main { margin-left: 0 !important; padding-top: 0.5cm !important; max-width: 100%; }
+  .card, .tier-card, .sector-card, .arch-zone, .namespace-diagram, .agent-branch, .portal-mock, .guarantee-card { background: #fff !important; border: 1px solid #ddd !important; break-inside: avoid; }
+  .callout { background: #f8f7f4 !important; border-left-color: #927A39 !important; }
+  .highlight-box { background: #f8f7f4 !important; border-color: #ccc !important; }
+  .data-table th { background: #f0ede6 !important; color: #0C1713 !important; border: 1px solid #ccc !important; }
+  .data-table td { border: 1px solid #ddd !important; color: #1a1a1a !important; }
+  h1, h2, h3, h4 { color: #0C1713 !important; }
+  p, span, td, th, li, div { color: #1a1a1a !important; }
+  .callout strong, .highlight-box strong { color: #927A39 !important; }
+  .data-table .price { color: #927A39 !important; }
+  .section-label { color: #927A39 !important; }
+  .arch-diagram { background: #f8f7f4 !important; border-color: #ccc !important; }
+  .arch-zone { background: #fff !important; border-color: #ddd !important; }
+  .arch-node { background: #f8f7f4 !important; border-color: #ddd !important; }
+  .funnel-step { break-inside: avoid; }
+  .nav-download { display: none !important; }
+  @page { margin: 1.5cm; }
+  .print-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 1cm;
+    font-family: var(--font-display);
+    font-size: 18pt;
+    color: #0C1713 !important;
+  }
+}
+.print-header { display: none; }
+
+/* ================================================================
+   MOBILE
+   ================================================================ */
+.mobile-nav-btn {
+  display: none;
+  position: fixed;
+  top: 4rem; left: 0.75rem;
+  z-index: 95;
+  background: var(--color-surface);
+  border: 1px solid rgba(194,162,77,0.2);
+  color: var(--color-accent);
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+  .sidebar { display: none; }
+  .sidebar.mobile-open { display: block; width: 16rem; z-index: 95; }
+  .main { margin-left: 0; }
+  .mobile-nav-btn { display: block; }
+  .tier-grid { grid-template-columns: 1fr; }
+  .guarantee-grid { grid-template-columns: 1fr; }
+  .agent-branches { grid-template-columns: 1fr; }
+  .pattern-flow { flex-direction: column; }
+  .pattern-arrow { transform: rotate(90deg); padding: 0.25rem 0; }
+}
+
+@media (max-width: 640px) {
+  .header { padding: 0 0.75rem; }
+  .main { padding: 4.5rem 0.75rem 3rem; }
+  .header-subtitle { display: none; }
+  .sector-grid { grid-template-columns: 1fr 1fr; }
+  .routing-row { grid-template-columns: 1fr; gap: 0.25rem; }
+  .routing-row .route-pct, .routing-row .route-cost { text-align: left; }
+  .security-layer-content { flex-direction: column; gap: 0.25rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header print-hide">
+  <div class="header-left">
+    <a href="/" class="wordmark"><svg style="height:2rem;width:auto;" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><g transform="translate(2,2)"><circle cx="11" cy="13" r="11" fill="none" stroke="#c9a84c" stroke-width="2"/><circle cx="11" cy="13" r="8.5" fill="none" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/><line x1="3" y1="13" x2="8" y2="13" stroke="#c9a84c" stroke-width="0.5"/><line x1="14" y1="13" x2="19" y2="13" stroke="#c9a84c" stroke-width="0.5"/><line x1="11" y1="5" x2="11" y2="10" stroke="#c9a84c" stroke-width="0.5"/><line x1="11" y1="16" x2="11" y2="21" stroke="#c9a84c" stroke-width="0.5"/><circle cx="11" cy="13" r="1" fill="#c9a84c"/><path d="M22,2 L22,22 Q22,24 24,24" stroke="#d4cfc4" stroke-width="2" fill="none" stroke-linecap="round"/></g></svg></a>
+    <span class="header-subtitle">Approval-in-the-Loop</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-xs btn-secondary" onclick="window.print()">Print / PDF</button>
+  </div>
+</header>
+
+<!-- Print-only header -->
+<div class="print-header">Afferentic &mdash; Approval-in-the-Loop Spec</div>
+
+<!-- SIDEBAR -->
+<button class="mobile-nav-btn print-hide" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')">Nav</button>
+<nav class="sidebar print-hide" id="sidebar">
+
+  <div class="site-nav">
+    <a href="/" class="site-nav-logo"><svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><g transform="translate(2,2)"><circle cx="11" cy="13" r="11" fill="none" stroke="#c9a84c" stroke-width="2"/><circle cx="11" cy="13" r="8.5" fill="none" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/><line x1="3" y1="13" x2="8" y2="13" stroke="#c9a84c" stroke-width="0.5"/><line x1="14" y1="13" x2="19" y2="13" stroke="#c9a84c" stroke-width="0.5"/><line x1="11" y1="5" x2="11" y2="10" stroke="#c9a84c" stroke-width="0.5"/><line x1="11" y1="16" x2="11" y2="21" stroke="#c9a84c" stroke-width="0.5"/><circle cx="11" cy="13" r="1" fill="#c9a84c"/><path d="M22,2 L22,22 Q22,24 24,24" stroke="#d4cfc4" stroke-width="2" fill="none" stroke-linecap="round"/></g></svg></a>
+    <div class="site-nav-links">
+      <a href="/how-it-works">How It Works</a>
+      <a href="/the-map">The Map</a>
+      <a href="/domain-build">Domain Build</a>
+      <a href="/deliverables">Deliverables</a>
+      <a href="/financial-plan">Financials</a>
+      <a href="/go-to-market">Go-to-Market</a>
+      <a href="/competitive-landscape">Competition</a>
+      <a href="/delivery-roadmap">Roadmap</a>
+      <a href="/pricing">Calculator</a>
+      <a href="/service-management">Service Mgmt</a>
+      <a href="/approvals-spec" class="current">Approvals Spec</a>
+    </div>
+  </div>
+
+  <div class="nav-group-label">The Spec</div>
+  <a href="#sec-why" class="nav-link active">Why this matters</a>
+  <a href="#sec-story" class="nav-link">The canonical story &mdash; Ben at DHP</a>
+  <a href="#sec-outcomes" class="nav-link">The four outcomes</a>
+  <a href="#sec-gin" class="nav-link">Walkthrough &mdash; London&rsquo;s Dry Gin</a>
+  <a href="#sec-flow" class="nav-link">The flow, end to end</a>
+  <a href="#sec-artifact" class="nav-link">The proposal artifact</a>
+  <a href="#sec-email" class="nav-link">One-click from email</a>
+
+  <div class="nav-divider"></div>
+  <div class="nav-group-label">Behaviour</div>
+  <a href="#sec-ladder" class="nav-link">The confidence ladder</a>
+  <a href="#sec-edit" class="nav-link">Edit without a conversation</a>
+  <a href="#sec-conversation" class="nav-link">When conversation is needed</a>
+
+  <div class="nav-divider"></div>
+  <div class="nav-group-label">Rigour</div>
+  <a href="#sec-risks" class="nav-link">Risks &amp; mitigations</a>
+  <a href="#sec-alternatives" class="nav-link">Alternatives we rejected</a>
+  <a href="#sec-build" class="nav-link">What to build first</a>
+
+  <div class="nav-divider"></div>
+  <div class="nav-group-label">Related</div>
+  <a href="/how-it-works" class="nav-download">&#8599; How It Works</a>
+  <a href="/delivery-roadmap" class="nav-download">&#8599; Delivery Roadmap</a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+<!-- ================================================================
+     COVER
+     ================================================================ -->
+<section>
+  <p class="section-label">Operating Spec</p>
+  <h1>Approval-in-the-Loop</h1>
+  <p style="color: var(--color-text-secondary); margin-bottom: 1.5rem; font-size: 1.05rem;">
+    How Afferentic agents hand work back to the human when the stakes justify it. A safety net that exists while trust is being earned, and fades away as it is. Written for internal reference and customer-onboarding conversations. Prepared April 2026.
+  </p>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 1: WHY -->
+<section id="sec-why">
+  <p class="section-label">The Spec</p>
+  <h2>1. Why this matters</h2>
+
+  <div class="card">
+    <p>Automation only earns adoption if the operator can <em>feel the seatbelt</em> on day one. A CFO who has signed off every price change for fifteen years will not hand that gesture to a black box because the demo was impressive. They will hand it over if, for the first few weeks, the agent lets them keep the gesture &mdash; with less friction.</p>
+    <p style="color: var(--color-text-secondary);">Approval-in-the-loop is the mechanism for that handover. It is not a feature we sell. It is the posture the system adopts while the relationship is new.</p>
+  </div>
+
+  <div class="callout">
+    <strong>The design constraint.</strong> The operator should not have to learn a new tool to approve something. An email with a visible button is where they already live. They tap, the work proceeds, Afferentic keeps the trail. Adoption is won in the two seconds between reading the email and tapping the button.
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 2: STORY -->
+<section id="sec-story">
+  <h2>2. The canonical story &mdash; Ben at DHP</h2>
+
+  <p>Ben runs pricing at a distribution company. His afferent reads the market feed, checks the stock positions, and prepares a set of price edits every morning at 07:30. The first month he wants to approve each batch himself &mdash; not because he expects the agent to be wrong, but because he hasn&rsquo;t yet seen it be right often enough to trust it without looking.</p>
+
+  <p>At 07:31 his phone buzzes. The email opens with the numbers he cares about: how many edits, the average change, the largest single change. Underneath, a table of the proposed prices. Underneath that, three buttons: <strong>Approve</strong>, <strong>Edit</strong>, <strong>Decline</strong>.</p>
+
+  <p>He taps Approve. The agent applies the edits. A confirmation lands back in the same thread five seconds later. Ben drinks his coffee.</p>
+
+  <p style="color: var(--color-text-secondary);">Three weeks later, Ben has seen forty consecutive approvals where the agent was right. He doesn&rsquo;t want to approve the small ones any more. He moves the afferent down a rung on the confidence ladder &mdash; now it auto-applies edits below a threshold, and only emails him when a change exceeds it. A month after that, it handles the routine edits silently, and emails him only when the proposal sits outside the baseline the system has learned for him. Eventually, the email stops arriving most days, and that is the correct outcome.</p>
+
+  <div class="callout">
+    <strong>What Ben bought.</strong> Not automation. A system that let him keep doing his job, with less friction, while the agent earned the right to take parts of it off his plate.
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 3: THE FOUR OUTCOMES -->
+<section id="sec-outcomes">
+  <h2>3. The four outcomes</h2>
+
+  <p>When an approval lands in front of the operator, there are four things they can do with it. Three are decisions about the proposal itself; the fourth is a signal about the world the proposal was reasoning over. They are independent: an operator can Approve <em>and</em> Flag, because &ldquo;this is right, but I&rsquo;m nervous about the data&rdquo; is a coherent and important thing to express.</p>
+
+  <div class="card" style="padding: 1.25rem 1rem; background: rgba(194,162,77,0.03);">
+    <svg viewBox="0 0 820 520" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto; display:block; margin:0 auto;" role="img" aria-label="Flow diagram of the four approval outcomes">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#927A39"/>
+        </marker>
+        <marker id="arr-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#A09B8E"/>
+        </marker>
+      </defs>
+
+      <!-- Proposal box -->
+      <rect x="320" y="10" width="180" height="52" rx="10" fill="#1a2a22" stroke="#C2A24D" stroke-width="1.5"/>
+      <text x="410" y="34" text-anchor="middle" font-family="Instrument Serif, serif" font-size="15" fill="#D9C472">Proposal</text>
+      <text x="410" y="50" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="10" fill="#A09B8E" letter-spacing="2">AFFERENT RAISED</text>
+
+      <!-- arrow down -->
+      <line x1="410" y1="62" x2="410" y2="94" stroke="#927A39" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <!-- Operator reviews box -->
+      <rect x="290" y="98" width="240" height="44" rx="10" fill="#ffffff" stroke="#C2A24D" stroke-width="1" stroke-dasharray="2 3" opacity="0.95"/>
+      <text x="410" y="115" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="10" fill="#927A39" letter-spacing="2">OPERATOR REVIEWS</text>
+      <text x="410" y="131" text-anchor="middle" font-family="Instrument Serif, serif" font-size="13" fill="#0C1713" font-style="italic">email &bull; portal</text>
+
+      <!-- split lines from operator to four outcomes -->
+      <line x1="410" y1="142" x2="90"  y2="195" stroke="#927A39" stroke-width="1.4"/>
+      <line x1="410" y1="142" x2="290" y2="195" stroke="#927A39" stroke-width="1.4"/>
+      <line x1="410" y1="142" x2="530" y2="195" stroke="#927A39" stroke-width="1.4"/>
+      <line x1="410" y1="142" x2="730" y2="195" stroke="#A09B8E" stroke-width="1.2" stroke-dasharray="3 3"/>
+
+      <!-- four outcome boxes -->
+      <g>
+        <rect x="30"  y="200" width="160" height="72" rx="10" fill="#7D9B76" fill-opacity="0.12" stroke="#7D9B76" stroke-width="1.5"/>
+        <text x="110" y="224" text-anchor="middle" font-family="Instrument Serif, serif" font-size="17" fill="#0C1713">Approve</text>
+        <text x="110" y="246" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="11" fill="#6B6760">apply as-is</text>
+        <text x="110" y="262" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="10" fill="#927A39" font-style="italic">&#8220;yes&#8221;</text>
+      </g>
+      <g>
+        <rect x="230" y="200" width="160" height="72" rx="10" fill="#C2A24D" fill-opacity="0.12" stroke="#C2A24D" stroke-width="1.5"/>
+        <text x="310" y="224" text-anchor="middle" font-family="Instrument Serif, serif" font-size="17" fill="#0C1713">Edit</text>
+        <text x="310" y="246" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="11" fill="#6B6760">remove / modify / add</text>
+        <text x="310" y="262" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="10" fill="#927A39" font-style="italic">&#8220;nearly, but&#8221;</text>
+      </g>
+      <g>
+        <rect x="470" y="200" width="160" height="72" rx="10" fill="#B85C5C" fill-opacity="0.10" stroke="#B85C5C" stroke-width="1.5"/>
+        <text x="550" y="224" text-anchor="middle" font-family="Instrument Serif, serif" font-size="17" fill="#0C1713">Decline</text>
+        <text x="550" y="246" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="11" fill="#6B6760">with reason</text>
+        <text x="550" y="262" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="10" fill="#927A39" font-style="italic">&#8220;not this&#8221;</text>
+      </g>
+      <g>
+        <rect x="670" y="200" width="130" height="72" rx="10" fill="#C9A84C" fill-opacity="0.10" stroke="#C9A84C" stroke-width="1.5" stroke-dasharray="5 3"/>
+        <text x="735" y="224" text-anchor="middle" font-family="Instrument Serif, serif" font-size="17" fill="#0C1713">Flag</text>
+        <text x="735" y="246" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="10" fill="#6B6760">to source</text>
+        <text x="735" y="262" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="10" fill="#927A39" font-style="italic">can attach to any</text>
+      </g>
+
+      <!-- outcome labels below -->
+      <text x="110" y="300" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="10" fill="#6B6760" letter-spacing="1.5">ACTIONS APPLY</text>
+      <text x="310" y="300" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="10" fill="#6B6760" letter-spacing="1.5">MODIFIED ACTIONS APPLY</text>
+      <text x="550" y="300" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="10" fill="#6B6760" letter-spacing="1.5">NOTHING APPLIES</text>
+      <text x="735" y="300" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="10" fill="#6B6760" letter-spacing="1.5">SIGNAL ROUTED</text>
+
+      <!-- convergent arrows into feedback record -->
+      <line x1="110" y1="310" x2="410" y2="368" stroke="#927A39" stroke-width="1.2" marker-end="url(#arr)"/>
+      <line x1="310" y1="310" x2="410" y2="368" stroke="#927A39" stroke-width="1.2" marker-end="url(#arr)"/>
+      <line x1="550" y1="310" x2="410" y2="368" stroke="#927A39" stroke-width="1.2" marker-end="url(#arr)"/>
+      <line x1="735" y1="310" x2="410" y2="368" stroke="#A09B8E" stroke-width="1.1" stroke-dasharray="3 3" marker-end="url(#arr-dim)"/>
+
+      <!-- feedback record box -->
+      <rect x="180" y="370" width="460" height="56" rx="10" fill="#1a2a22" stroke="#C2A24D" stroke-width="1.5"/>
+      <text x="410" y="392" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="10" fill="#A09B8E" letter-spacing="2">FEEDBACK RECORD &mdash; KEYED BY AFFERENT</text>
+      <text x="410" y="413" text-anchor="middle" font-family="Instrument Serif, serif" font-size="13" fill="#D9C472" font-style="italic">nothing lost; next proposal is smarter</text>
+
+      <!-- three outcomes of the feedback record -->
+      <line x1="260" y1="426" x2="160" y2="465" stroke="#927A39" stroke-width="1.2" marker-end="url(#arr)"/>
+      <line x1="410" y1="426" x2="410" y2="465" stroke="#927A39" stroke-width="1.2" marker-end="url(#arr)"/>
+      <line x1="560" y1="426" x2="660" y2="465" stroke="#927A39" stroke-width="1.2" marker-end="url(#arr)"/>
+
+      <g>
+        <rect x="20"  y="470" width="280" height="40" rx="8" fill="#ffffff" stroke="rgba(194,162,77,0.3)"/>
+        <text x="160" y="487" text-anchor="middle" font-family="Instrument Serif, serif" font-size="12" fill="#0C1713">Afferent pre-adjusts next run</text>
+        <text x="160" y="501" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="9" fill="#6B6760" letter-spacing="1">SHORT-TERM &mdash; READS LAST N DECISIONS</text>
+      </g>
+      <g>
+        <rect x="310" y="470" width="200" height="40" rx="8" fill="#ffffff" stroke="rgba(194,162,77,0.3)"/>
+        <text x="410" y="487" text-anchor="middle" font-family="Instrument Serif, serif" font-size="12" fill="#0C1713">Flag destination notified</text>
+        <text x="410" y="501" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="9" fill="#6B6760" letter-spacing="1">EMAIL / TICKET / CHANNEL</text>
+      </g>
+      <g>
+        <rect x="520" y="470" width="280" height="40" rx="8" fill="#ffffff" stroke="rgba(194,162,77,0.3)"/>
+        <text x="660" y="487" text-anchor="middle" font-family="Instrument Serif, serif" font-size="12" fill="#0C1713">Patterns raise meta-improvements</text>
+        <text x="660" y="501" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="9" fill="#6B6760" letter-spacing="1">LONG-TERM &mdash; DURABLE CONFIG CHANGES</text>
+      </g>
+    </svg>
+
+    <p style="font-family: var(--font-display); font-style: italic; color: var(--color-text-secondary); text-align: center; margin-top: 0.75rem; font-size: 0.95rem;">Four doors out of the review; one feedback record; three ways that feedback makes the system smarter.</p>
+  </div>
+
+  <div class="pattern-flow" style="margin-top: 1.25rem;">
+    <div class="pattern-box"><h4>APPROVE</h4><p>The proposal is right. Apply it. The straight-through path &mdash; most approvals at steady state.</p></div>
+    <div class="pattern-box accent"><h4>EDIT</h4><p>The shape is right, the detail isn&rsquo;t. Remove rows, modify values, add something the afferent missed, then apply the corrected set. Typed mutations, validated by schema.</p></div>
+    <div class="pattern-box"><h4>DECLINE</h4><p>Not right this time. With a typed reason: <em>not this way</em>, <em>not yet</em>, <em>needs more</em>, <em>needs less</em>, <em>won&rsquo;t fix</em>. Each reason tells the afferent what to do differently.</p></div>
+    <div class="pattern-box"><h4>FLAG</h4><p>Orthogonal to the other three. Says &ldquo;the real issue is upstream &mdash; in the data, the mapping, or the afferent&rsquo;s logic&rdquo;. Attaches to any decision. Signal is routed to whoever can fix it.</p></div>
+  </div>
+
+  <div class="callout">
+    <strong>Why the four-outcome model matters commercially.</strong> A customer who only has a binary Approve/Decline has to choose between being a rubber stamp or a blocker. The richer vocabulary is what turns the operator from a bouncer into a coach &mdash; each correction is a contribution, not a rejection. That&rsquo;s the difference between an approval system that gets circumvented and one people actually want to use.
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 4: WALKTHROUGH -->
+<section id="sec-gin">
+  <h2>4. Walkthrough &mdash; London&rsquo;s Dry Gin</h2>
+
+  <p>The best way to feel how the four outcomes fit together is to follow a real case. Ben receives his morning stock-pricing proposal. It has 50 rows. Row 47 reads:</p>
+
+  <div class="card" style="font-family: var(--font-display); font-size: 1.1rem; color: var(--color-text-primary); padding: 1rem 1.25rem;">
+    <span style="color: var(--color-accent);">&rsaquo;</span> <em>Update <strong>Tanqueray Gold</strong> to &pound;24.50 (from &pound;23.00)</em>
+  </div>
+
+  <p>Ben blinks. <em>Tanqueray Gold</em> isn&rsquo;t a DHP SKU &mdash; the product that takes a morning price adjustment on that feed row is <em>London&rsquo;s Dry Gin</em>, at a different price point. He&rsquo;s seen this happen before when someone hand-keyed a row into the upstream spreadsheet and got the SKU label wrong.</p>
+
+  <p>Here is what he does, all from a single email, in under a minute:</p>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 24%;">Step</th>
+        <th style="width: 38%;">What Ben does</th>
+        <th>What the system records</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Reads the batch</strong></td>
+        <td>Eye down the 50 rows; everything else looks sane; row 47 doesn&rsquo;t.</td>
+        <td>&mdash;</td>
+      </tr>
+      <tr>
+        <td><strong>Hits Edit</strong></td>
+        <td>Removes the Tanqueray Gold row. Adds a London&rsquo;s Dry Gin row with the correct price. Leaves the other 49 untouched.</td>
+        <td><code style="font-size:11px;">edit.remove[row 47]</code><br><code style="font-size:11px;">edit.add[london&#39;s-dry-gin]</code></td>
+      </tr>
+      <tr>
+        <td><strong>Hits Flag</strong> on the removed row</td>
+        <td>Picks <em>upstream data</em>. Types: &ldquo;SKU wrong in morning feed row 47 &mdash; should be London&rsquo;s Dry Gin.&rdquo;</td>
+        <td><code style="font-size:11px;">flags: [{type: upstream_data, note: &hellip;}]</code></td>
+      </tr>
+      <tr>
+        <td><strong>Hits Approve</strong></td>
+        <td>Approves the corrected batch of 50 rows (49 original + 1 replacement).</td>
+        <td><code style="font-size:11px;">status: approved; edit_diff logged</code></td>
+      </tr>
+      <tr>
+        <td><strong>Apply fires</strong></td>
+        <td>The 50 approved rows go live. No Tanqueray Gold update ever leaves the building.</td>
+        <td>Apply result recorded per action.</td>
+      </tr>
+      <tr>
+        <td><strong>Flag dispatches</strong></td>
+        <td>Email lands with <code>pricing-data@dhp.co.uk</code>: <em>&ldquo;Operator corrected row 47 of morning feed &mdash; please verify the upstream SKU.&rdquo;</em></td>
+        <td>Signal tracked; ticket open until closed.</td>
+      </tr>
+      <tr>
+        <td><strong>Next morning</strong></td>
+        <td>Afferent reads its own feedback before proposing. Sees: &ldquo;Tanqueray Gold flagged upstream this week.&rdquo; Emits proposal with a <em>low-confidence SKU</em> warning on any Tanqueray row.</td>
+        <td>Afferent behaviour shifts without code change.</td>
+      </tr>
+      <tr>
+        <td><strong>A week later</strong></td>
+        <td>Pattern detector sees five flags on the same SKU in seven days. Raises a meta-improvement.</td>
+        <td>New approval in Ben&rsquo;s queue: <em>&ldquo;Improvement: add SKU validation step to dhp-stock-pricing before proposing.&rdquo;</em> with the five flag records as evidence.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>What just happened, commercially.</strong> Ben kept the correct pricing moving (the 49 good rows + 1 corrected). He told the data team exactly where their spreadsheet broke. He made the afferent more cautious on that SKU for next time. And he contributed to a durable fix that will land as its own reviewable improvement. Four actions, one minute, nothing falls on the floor. That story is what the portal and the email have to earn the right to deliver.
+  </div>
+
+  <div class="highlight-box">
+    <p><strong>The hard part isn&rsquo;t the model.</strong> It&rsquo;s the portal and the email making four distinct decisions feel like &ldquo;just replying to an email&rdquo;. The operator should never have to learn the taxonomy &mdash; the buttons, tooltips, and defaults have to carry it. If Ben ever has to think &ldquo;wait, is this a decline or a flag?&rdquo;, the UX failed.</p>
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 5: FLOW -->
+<section id="sec-flow">
+  <h2>5. The flow, end to end</h2>
+
+  <div class="pattern-flow">
+    <div class="pattern-box"><h4>1. PREPARE</h4><p>Afferent runs. Produces a typed artifact &mdash; goal, constraints, the specific actions it wants to take, why.</p></div>
+    <div class="pattern-arrow">&rarr;</div>
+    <div class="pattern-box accent"><h4>2. STASH &amp; NOTIFY</h4><p>Artifact parked server-side, keyed by a signed token. Email sent, badge lit in Tamar, entry in the approvals queue.</p></div>
+    <div class="pattern-arrow">&rarr;</div>
+    <div class="pattern-box"><h4>3. DECIDE</h4><p>Operator hits Approve, Edit, or Decline from email or Tamar. No login required for Approve &mdash; the signature is the auth.</p></div>
+    <div class="pattern-arrow">&rarr;</div>
+    <div class="pattern-box"><h4>4. APPLY</h4><p>On Approve: the apply step re-checks preconditions (the world may have moved) then executes the actions exactly as prepared.</p></div>
+    <div class="pattern-arrow">&rarr;</div>
+    <div class="pattern-box"><h4>5. CONFIRM</h4><p>Result posted back &mdash; same email thread, Tamar, audit log. Outcome feeds the confidence ladder.</p></div>
+  </div>
+
+  <div class="callout" style="margin-top:1rem;">
+    <strong>Each step is short.</strong> The agent does not hold a session open waiting for the operator to reply. The preparation step ends, the apply step fires when Approve is hit, and only then. This is what keeps the cost sane.
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 4: ARTIFACT -->
+<section id="sec-artifact">
+  <h2>6. The proposal artifact</h2>
+
+  <p>The agent does not hand the operator a paragraph of prose. It hands them a typed document with a known shape. The shape makes approvals skimmable, edits safe, and apply mechanical.</p>
+
+  <div class="card">
+<pre style="margin:0;font-size:0.85rem;line-height:1.5;color:var(--color-text-primary);white-space:pre-wrap;">{
+  "proposal_id":   "stock-price-2026-04-17-0730",
+  "afferent":      "dhp-stock-pricing",
+  "tenant":        "dhp",
+  "prepared_at":   "2026-04-17T07:30:14Z",
+  "expires_at":    "2026-04-17T23:30:00Z",
+  "confidence":    "manual_every_time",
+
+  "goal":          "Align stock prices with morning market feed",
+  "constraints":   ["no single edit &gt; 5%", "no negative margin"],
+  "rationale":     "Market moved 1.2% overnight; recommended rebalance per policy-v3.",
+
+  "actions": [
+    { "type": "price.update", "sku": "AX-400", "from": 12.40, "to": 12.55, "reason": "market+1.2%" },
+    { "type": "price.update", "sku": "AX-410", "from": 18.20, "to": 18.35, "reason": "market+1.2%" }
+  ],
+
+  "validation": [
+    { "check": "all-skus-exist",       "required": true },
+    { "check": "no-price-below-cost",  "required": true }
+  ],
+
+  "audit": {
+    "sources":     ["feed://bloomberg/eod/2026-04-17", "db://dhp/stock/snapshot/..."],
+    "policy_ref":  "pricing-policy-v3",
+    "runbook":     "/runbooks/dhp/stock-pricing.md"
+  }
+}</pre>
+  </div>
+
+  <div class="callout">
+    <strong>Why structure matters.</strong> Most approvals need zero LLM at the apply step &mdash; the actions are typed and the runner just executes them. Edits are typed mutations with schema validation. Audit is free because every proposal is already a record. And when a conversation is genuinely needed, the artifact is the context you hand to the next run.
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 5: EMAIL -->
+<section id="sec-email">
+  <h2>7. One-click from email</h2>
+
+  <p>The approval email is not a summons to log into a portal. It is the decision itself, rendered inline.</p>
+
+  <div class="highlight-box">
+    <p><strong>What the operator sees.</strong></p>
+    <ul style="list-style:none;padding-left:0;margin-top:0.5rem;color:var(--color-text-secondary);">
+      <li>&mdash; A headline number (how many actions, the single biggest one).</li>
+      <li>&mdash; A table of the proposed actions, clearly typeset, truncated sensibly if long.</li>
+      <li>&mdash; Three buttons underneath: <strong>Approve</strong>, <strong>Edit</strong>, <strong>Decline</strong>.</li>
+      <li>&mdash; A link into Tamar with the same content, if they prefer to review it there.</li>
+      <li>&mdash; The rationale, under a collapsible &ldquo;Why&rdquo;.</li>
+    </ul>
+  </div>
+
+  <p><strong>What each button does.</strong></p>
+  <ul style="padding-left:1.25rem;color:var(--color-text-secondary);">
+    <li><strong>Approve</strong> &mdash; signed URL to <code style="background:var(--glass-bg);padding:0 4px;border-radius:4px;">/approvals/:token/approve</code>. No login. The endpoint re-checks the signature, the TTL, and the preconditions, then fires the apply run. Idempotent.</li>
+    <li><strong>Decline</strong> &mdash; same shape, different endpoint. Records a reason if provided.</li>
+    <li><strong>Edit</strong> &mdash; opens Tamar to the proposal, typed form per action. Operator flips rows off, adjusts numbers, saves. The edit is validated by the schema before Approve is even offered.</li>
+  </ul>
+
+  <div class="callout">
+    <strong>Security posture.</strong> The signed link is enough for Approve on low-stakes actions. Anything above a policy-defined threshold requires the click to be followed by a Tamar login &mdash; the email merely starts the journey; the heavy-footed actions land in a session. Tokens are single-use, TTL-bound, and every click is audited whether or not it led to apply.
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 6: LADDER -->
+<section id="sec-ladder">
+  <p class="section-label">Behaviour</p>
+  <h2>8. The confidence ladder</h2>
+
+  <p>Every afferent has a <code style="background:var(--glass-bg);padding:0 4px;border-radius:4px;">confidence_policy</code> that the operator sets. It starts strict and relaxes as the afferent earns it.</p>
+
+  <table class="data-table">
+    <thead>
+      <tr><th style="width:22%;">Policy</th><th>Behaviour</th><th style="width:28%;">When to use</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>manual_every_time</code></td><td>Every run emails the operator. Nothing applies without an Approve.</td><td>First weeks. High-stakes work (pricing, billing, external comms).</td></tr>
+      <tr><td><code>manual_above_threshold</code></td><td>Small changes auto-apply. Changes above a typed threshold (amount, count, blast radius) email the operator.</td><td>Once the afferent has a track record on the routine cases.</td></tr>
+      <tr><td><code>manual_on_anomaly</code></td><td>The system learns a baseline (via Gemma4). Proposals within the baseline auto-apply. Outliers are surfaced for approval.</td><td>Stable afferents where the shape of normal work is well understood.</td></tr>
+      <tr><td><code>auto</code></td><td>Fully autonomous. Audit trail still kept. Operator can subscribe to a digest rather than individual decisions.</td><td>Afferents that have proven themselves for months.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>The ladder is operator-controlled.</strong> Afferentic does not silently promote an afferent up the ladder. The operator sees a prompt &mdash; &ldquo;this afferent has been right 40 times in a row, ready to let it handle small changes on its own?&rdquo; &mdash; and makes the move deliberately. Moving <em>down</em> the ladder is also one click, and we don&rsquo;t need a reason.
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 7: EDIT -->
+<section id="sec-edit">
+  <h2>9. Edit without a conversation</h2>
+
+  <p>Edit is where most systems get dragged into chat interfaces that nobody asked for. Ours does not.</p>
+
+  <p>Because the proposal is typed, editing it is schema-level. The Tamar form for a proposal renders each action as a row with clear controls &mdash; checkbox to include, number inputs with min/max guards, inline validation. The operator turns off row 3, nudges the price on row 7, saves. The schema + policy check run immediately. If the edit is valid, Approve becomes live. If it isn&rsquo;t, the validator tells them exactly what&rsquo;s wrong in the same language the agent uses.</p>
+
+  <div class="highlight-box">
+    <p><strong>What this buys.</strong></p>
+    <ul style="list-style:none;padding-left:0;margin-top:0.5rem;color:var(--color-text-secondary);">
+      <li>&mdash; No agent is invoked for most edits. Zero cost, zero latency.</li>
+      <li>&mdash; The edits the operator makes are themselves signal for the learning loop &mdash; &ldquo;this operator consistently caps price changes at 3%&rdquo; becomes a constraint proposal at the next monthly review.</li>
+      <li>&mdash; The audit trail distinguishes agent decisions from operator overrides automatically.</li>
+    </ul>
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 8: CONVERSATION -->
+<section id="sec-conversation">
+  <h2>10. When conversation is needed</h2>
+
+  <p>Sometimes the operator wants to ask a question, not edit a row. &ldquo;Why did you pick SKU AX-400 to move 1.2% when the feed actually moved 0.9%?&rdquo;</p>
+
+  <p>Two answers, in order of cost:</p>
+
+  <ol style="padding-left:1.25rem;color:var(--color-text-secondary);">
+    <li style="margin-bottom:0.5rem;"><strong>Show the rationale.</strong> The proposal already carries the reasoning trace. Most questions are answered by displaying what the agent already said it was doing. No inference.</li>
+    <li><strong>Reconsider.</strong> If the question is really &ldquo;reconsider the whole batch given this new constraint&rdquo;, we fire a fresh Opus run with the original proposal plus the operator&rsquo;s feedback as input. Short because the proposal is structured. Returns a new proposal that goes through the same Approve/Edit/Decline cycle.</li>
+  </ol>
+
+  <div class="callout">
+    <strong>The thing we specifically don&rsquo;t do.</strong> We do not hold a long-running conversational session over an approval. It adds cost, complicates the architecture, and &mdash; for the actual work operators do &mdash; turns out to be the wrong shape almost always. Questions get answered from the trace. Reconsiderations get a fresh, cheap run. Everything else was probably an edit.
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 9: RISKS -->
+<section id="sec-risks">
+  <p class="section-label">Rigour</p>
+  <h2>11. Risks &amp; mitigations</h2>
+
+  <table class="data-table">
+    <thead>
+      <tr><th style="width:28%;">Risk</th><th>Mitigation</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Leaked signed link</strong></td>
+        <td>Short TTL (24h default, shorter for higher-stakes). Single-use tokens. Device-bound on first click. High-stakes approvals require login after click, not just the click.</td>
+      </tr>
+      <tr>
+        <td><strong>Stale state &mdash; the world moved</strong></td>
+        <td>The apply step re-checks preconditions (&ldquo;are these still the current prices?&rdquo;) before executing. If the preconditions fail, it aborts and re-proposes rather than forcing the stale action through.</td>
+      </tr>
+      <tr>
+        <td><strong>Email never arrives</strong></td>
+        <td>DKIM/SPF tight from day one. Tamar shows the same pending approval with a visible badge on the dashboard. A digest email at end of day lists anything pending so nothing can silently rot in a spam folder.</td>
+      </tr>
+      <tr>
+        <td><strong>Confidence ladder promotes too fast</strong></td>
+        <td>The operator promotes, not the system. We surface the option; they make the call. Demotion is always one click and requires no justification.</td>
+      </tr>
+      <tr>
+        <td><strong>Operator approves without reading</strong></td>
+        <td>Email lead with the headline number (biggest single change, total blast radius). If the headline is alarming, the eye catches it. For high-stakes afferents, require a confirmation step (&ldquo;I&rsquo;ve read this and I approve&rdquo;) &mdash; not just a one-click.</td>
+      </tr>
+      <tr>
+        <td><strong>Cost creep from reconsiderations</strong></td>
+        <td>Reconsiderations are budgeted per afferent. Hit the budget and the system says so out loud rather than silently truncating.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 10: ALTERNATIVES -->
+<section id="sec-alternatives">
+  <h2>12. Alternatives we rejected</h2>
+
+  <div class="card">
+    <h3>Conversational session held open during approval</h3>
+    <p style="color: var(--color-text-secondary);">Uses the Claude SDK with a long-lived session. Feels interactive but holds compute and tokens while the operator decides. For approvals that sit for hours or days, the cost and complexity are wrong. Rejected.</p>
+  </div>
+
+  <div class="card">
+    <h3>Gemma4 as a conversational middleman</h3>
+    <p style="color: var(--color-text-secondary);">Keep the proposer as Opus, use the local Gemma4 for back-and-forth during review. Cheap and cute, but introduces two models with diverging worldviews, and Gemma4 is weaker on re-planning &mdash; which is exactly where conversation matters. Rejected as the default. Gemma4 stays in the loop, but narrower: classifying edits as trivial-vs-constraint-changing, and learning per-operator baselines.</p>
+  </div>
+
+  <div class="card">
+    <h3>Email-only approvals, no Tamar surface</h3>
+    <p style="color: var(--color-text-secondary);">Simpler to build, but fragile: no audit surface for the operator, no way to handle Edit, and anything missed in email is invisible. Email stays the one-click entry point; Tamar is the source of truth.</p>
+  </div>
+
+  <div class="card">
+    <h3>Tamar-only approvals, no email</h3>
+    <p style="color: var(--color-text-secondary);">Assumes the operator lives in Tamar. Most operators don&rsquo;t &mdash; they live in email. Forcing a login per approval is friction that kills adoption on day one. Rejected.</p>
+  </div>
+</section>
+
+<div class="section-break"></div>
+
+<!-- SECTION 11: BUILD -->
+<section id="sec-build">
+  <h2>13. What to build first</h2>
+
+  <p>A concrete cut, in the order that de-risks the design:</p>
+
+  <ol style="padding-left:1.25rem;color:var(--color-text-secondary);">
+    <li style="margin-bottom:0.5rem;"><strong>Approval artifact schema</strong> &mdash; TypeScript types + JSON schema. Used by the proposer to write, by Tamar to render, by the apply runner to execute.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Approvals API on Tamar</strong> &mdash; <code>POST /api/approvals</code> (park), <code>GET /api/approvals/:id</code>, <code>POST /api/approvals/:id/approve|decline|edit</code>, with signed-link auth for approve and token-based auth for edit.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Approvals tab in Tamar</strong> &mdash; queue view, proposal detail with typed form, audit history. Same component library as the rest of Tamar.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Email template</strong> &mdash; clean, brand-consistent, buttons with signed URLs. Built once, used by every afferent that needs approvals.</li>
+    <li style="margin-bottom:0.5rem;"><strong>Automation-hook helper</strong> &mdash; <code>request_approval &quot;title&quot; artifact.json</code> from any afferent script. Returns when a decision lands (or times out cleanly).</li>
+    <li style="margin-bottom:0.5rem;"><strong>First afferent migration</strong> &mdash; pick a safe one (the DHP stock-pricing afferent if that client engagement is live, otherwise an internal one) and wire it through end to end. Prove the shape before rolling out.</li>
+    <li><strong>Confidence policy UI</strong> &mdash; per-afferent dropdown, with the &ldquo;promote?&rdquo; prompt logic. Ship last, once the cycle is working.</li>
+  </ol>
+
+  <div class="callout">
+    <strong>The point of this order.</strong> Every step produces something the operator can touch. The schema alone is of no use; the API plus a ugly Tamar page lets a real afferent run end-to-end. Build what earns the next decision, not what completes the feature list.
+  </div>
+</section>
+
+</main>
+
+<!-- ================================================================
+     SIDEBAR ACTIVE STATE MANAGEMENT
+     ================================================================ -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const links = document.querySelectorAll('.nav-link');
+  const sections = document.querySelectorAll('section[id]');
+
+  function updateActive() {
+    let current = '';
+    sections.forEach(s => {
+      const top = s.getBoundingClientRect().top;
+      if (top < 150) current = s.id;
+    });
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+});
+</script>
+
+</body>
+</html>

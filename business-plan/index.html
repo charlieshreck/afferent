@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Afferentic — Business Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Instrument+Sans:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cg transform='translate(2,2)'%3E%3Ccircle cx='11' cy='13' r='11' fill='none' stroke='%23c9a84c' stroke-width='2'/%3E%3Ccircle cx='11' cy='13' r='8.5' fill='none' stroke='%23c9a84c' stroke-width='0.5' opacity='0.4'/%3E%3Cline x1='3' y1='13' x2='8' y2='13' stroke='%23c9a84c' stroke-width='0.5'/%3E%3Cline x1='14' y1='13' x2='19' y2='13' stroke='%23c9a84c' stroke-width='0.5'/%3E%3Cline x1='11' y1='5' x2='11' y2='10' stroke='%23c9a84c' stroke-width='0.5'/%3E%3Cline x1='11' y1='16' x2='11' y2='21' stroke='%23c9a84c' stroke-width='0.5'/%3E%3Ccircle cx='11' cy='13' r='1' fill='%23c9a84c'/%3E%3Cpath d='M22,2 L22,22 Q22,24 24,24' stroke='%23d4cfc4' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+:root {
+  --color-canvas: #F0EDE6;
+  --color-surface: #111f19;
+  --color-accent: #C2A24D;
+  --color-accent-light: #D9C472;
+  --color-accent-dim: #927A39;
+  --color-text-primary: #0C1713;
+  --color-text-secondary: #A09B8E;
+  --color-text-muted: #6B6760;
+  --glass-bg: rgba(12, 23, 19, 0.04);
+  --glass-border: rgba(12, 23, 19, 0.08);
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-body: 'Instrument Sans', system-ui, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  font-weight: 300;
+  color: var(--color-text-primary);
+  background: var(--color-canvas);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Grain */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* === BRASS LAMP === */
+.lamp-container {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100vh;
+  pointer-events: none; z-index: 1; overflow: hidden;
+}
+.lamp-mask { position: absolute; top: 0; width: 100%; height: 8vh; background: var(--color-canvas); z-index: 2; }
+.lamp-wing-left {
+  position: absolute; top: 12vh; right: 50%; height: 10rem;
+  background: conic-gradient(from 70deg at center top, rgba(194,162,77,0.4), transparent 25%);
+  filter: blur(8px); animation: breathe 8s ease-in-out infinite; opacity: 0.5;
+}
+.lamp-wing-right {
+  position: absolute; top: 12vh; left: 50%; height: 10rem;
+  background: conic-gradient(from 290deg at center top, transparent 75%, rgba(194,162,77,0.4));
+  filter: blur(8px); animation: breathe 8s ease-in-out infinite; opacity: 0.5;
+}
+.lamp-filament {
+  position: absolute; top: 12vh; left: 50%; transform: translateX(-50%); height: 1px;
+  background: rgba(217,196,114,0.6); filter: blur(1px);
+  animation: breathe 8s ease-in-out infinite, pulse-opacity 8s ease-in-out infinite;
+}
+.lamp-core {
+  position: absolute; top: 8vh; left: 50%; transform: translateX(-50%);
+  height: 10rem; border-radius: 50%; background: rgba(217,196,114,0.3);
+  filter: blur(4rem); animation: breathe-core 8s ease-in-out infinite, pulse-opacity-core 8s ease-in-out infinite;
+}
+.lamp-halo {
+  position: absolute; top: 6vh; left: 50%; transform: translateX(-50%);
+  height: 12rem; width: 36rem; border-radius: 50%; background: rgba(194,162,77,0.15);
+  filter: blur(5rem); animation: pulse-halo 8s ease-in-out infinite;
+}
+.lamp-cone {
+  position: absolute; top: 14vh; width: 100%; height: 60vh;
+  background: radial-gradient(ellipse 50% 65% at 50% 0%, rgba(194,162,77,0.12) 0%, rgba(194,162,77,0.04) 45%, transparent 75%);
+  animation: pulse-opacity 8s ease-in-out infinite;
+}
+.lamp-pulse {
+  position: absolute; top: 4vh; left: 50%; transform: translateX(-50%);
+  width: 60rem; height: 55vh;
+  background: radial-gradient(ellipse 55% 60% at 50% 10%, rgba(194,162,77,0.08) 0%, transparent 65%);
+  animation: pulse-big 8s ease-in-out infinite;
+}
+
+@keyframes breathe { 0%, 100% { width: 26rem; } 50% { width: 32rem; } }
+@keyframes breathe-core { 0%, 100% { width: 16rem; opacity: 0.3; } 50% { width: 22rem; opacity: 0.5; } }
+@keyframes pulse-opacity { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.8; } }
+@keyframes pulse-opacity-core { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.5; } }
+@keyframes pulse-halo { 0%, 100% { opacity: 0.15; transform: translateX(-50%) scale(1); } 50% { opacity: 0.3; transform: translateX(-50%) scale(1.05); } }
+@keyframes pulse-big { 0%, 100% { opacity: 0.06; transform: translateX(-50%) scale(0.97); } 50% { opacity: 0.15; transform: translateX(-50%) scale(1.04); } }
+
+/* === CONTENT === */
+.content {
+  position: relative; z-index: 2;
+  max-width: 860px; margin: 0 auto;
+  padding: 18vh 2rem 4rem;
+  display: flex; flex-direction: column; align-items: center;
+}
+
+/* Wordmark */
+.wordmark {
+  display: flex; align-items: flex-end;
+  margin-bottom: 0.75rem; line-height: 1;
+  opacity: 0; animation: fade-in 1.5s ease-out 0.3s forwards;
+}
+.wordmark svg { height: 2.6rem; width: auto; margin-right: 0.08rem; margin-bottom: 0.65rem; }
+.wordmark span {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 5.5rem; font-weight: 400; letter-spacing: 0.06em;
+  color: #d4cfc4; line-height: 1;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === SECTIONS === */
+.section-group {
+  width: 100%;
+  margin-bottom: 2.5rem;
+  opacity: 0;
+  animation: fade-in 0.8s ease-out forwards;
+}
+.section-group:nth-child(1) { animation-delay: 0.8s; }
+.section-group:nth-child(2) { animation-delay: 1.1s; }
+.section-group:nth-child(3) { animation-delay: 1.4s; }
+.section-group:nth-child(4) { animation-delay: 1.7s; }
+.section-group:nth-child(5) { animation-delay: 2.0s; }
+
+.section-heading {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(194,162,77,0.15);
+}
+
+/* Row items */
+.row-link {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--glass-border);
+  transition: border-color 0.3s;
+}
+.row-link:last-child { border-bottom: none; }
+.row-link:hover { border-color: rgba(194,162,77,0.25); }
+.row-link:hover .row-title { color: var(--color-accent-light); }
+
+.row-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  transition: color 0.3s;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.row-dots {
+  flex: 1;
+  border-bottom: 1px dotted var(--color-text-muted);
+  margin-bottom: 0.3em;
+  min-width: 2rem;
+  opacity: 0.3;
+}
+
+.row-desc {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  text-align: right;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 45%;
+}
+
+/* Hero card for the main doc */
+.hero-card {
+  display: block;
+  background: var(--glass-bg);
+  border: 1px solid rgba(194,162,77,0.2);
+  border-radius: 16px;
+  padding: 1.75rem 2rem;
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: 1rem;
+  transition: border-color 0.4s, transform 0.3s;
+}
+.hero-card:hover {
+  border-color: rgba(194,162,77,0.4);
+  transform: translateY(-2px);
+}
+.hero-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  margin-bottom: 0.4rem;
+}
+.hero-card p {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+.hero-card .meta {
+  font-size: 0.7rem;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 0.75rem;
+}
+
+/* Footer links */
+.footer-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  opacity: 0;
+  animation: fade-in 0.8s ease-out 2.3s forwards;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.footer-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-family: var(--font-body); font-size: 0.82rem; font-weight: 400;
+  padding: 0.45rem 0.9rem; border-radius: 10px;
+  border: 1px solid rgba(194,162,77,0.25);
+  background: rgba(194,162,77,0.06);
+  color: var(--color-accent-light);
+  text-decoration: none; transition: all 0.3s;
+}
+.footer-btn:hover { background: rgba(194,162,77,0.12); border-color: rgba(194,162,77,0.4); }
+.footer-btn.subtle { border-color: rgba(12,23,19,0.1); color: var(--color-text-secondary); background: transparent; }
+.footer-btn.subtle:hover { border-color: rgba(12,23,19,0.2); }
+
+.archive-note {
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  opacity: 0;
+  animation: fade-in 0.8s ease-out 2.5s forwards;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .wordmark span { font-size: 2.8rem; }
+  .wordmark svg { height: 1.8rem; margin-bottom: 0.4rem; }
+  .content { padding: 18vh 1rem 3rem; }
+  .row-desc { display: none; }
+  .row-title { font-size: 1rem; }
+  .hero-card { padding: 1.25rem; }
+  .hero-card h3 { font-size: 1.2rem; }
+  .lamp-wing-left, .lamp-wing-right, .lamp-filament { display: none; }
+  .lamp-halo { width: 80vw; }
+  .footer-row { flex-direction: column; }
+  .footer-btn { width: 100%; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- Brass Lamp Animation -->
+<!-- lamp removed: designed for dark theme, doesn't suit light -->
+
+<!-- Content -->
+<div class="content">
+  <h1 class="wordmark">
+    <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(2,2)">
+        <circle cx="11" cy="13" r="11" fill="none" stroke="#c9a84c" stroke-width="2"/>
+        <circle cx="11" cy="13" r="8.5" fill="none" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/>
+        <line x1="3" y1="13" x2="8" y2="13" stroke="#c9a84c" stroke-width="0.5"/>
+        <line x1="14" y1="13" x2="19" y2="13" stroke="#c9a84c" stroke-width="0.5"/>
+        <line x1="11" y1="5" x2="11" y2="10" stroke="#c9a84c" stroke-width="0.5"/>
+        <line x1="11" y1="16" x2="11" y2="21" stroke="#c9a84c" stroke-width="0.5"/>
+        <circle cx="11" cy="13" r="1" fill="#c9a84c"/>
+        <path d="M22,2 L22,22 Q22,24 24,24" stroke="#d4cfc4" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </g>
+    </svg>
+    <span>fferentic</span>
+  </h1>
+  <div style="margin-bottom:3rem;"></div>
+
+  <!-- ============================== -->
+  <!-- THE BUSINESS                    -->
+  <!-- ============================== -->
+  <div class="section-group">
+    <div class="section-heading">The Business</div>
+    <a href="/how-it-works" class="hero-card">
+      <h3>How It Works</h3>
+      <p>The complete reference. Three-tier intelligence architecture, Gemma 4 operations engine, 7-layer multi-tenant isolation, delivery models, exit plan, due diligence. Everything an advisor, investor, or IT director needs.</p>
+      <div class="meta">22 sections</div>
+    </a>
+    <a href="/how-it-actually-works" class="row-link">
+      <span class="row-title">How It Actually Works</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Three-tier architecture, Gemma 4 operations engine, 7-layer isolation</span>
+    </a>
+    <a href="/canvas-v2" class="row-link">
+      <span class="row-title">Business Model Canvas</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Outcome-first positioning, stickiness model</span>
+    </a>
+    <a href="/competitive-landscape" class="row-link">
+      <span class="row-title">Competitive Landscape</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Named competitors, positioning map, the window</span>
+    </a>
+  </div>
+
+  <!-- ============================== -->
+  <!-- THE PRODUCT                     -->
+  <!-- ============================== -->
+  <div class="section-group">
+    <div class="section-heading">The Product</div>
+    <a href="/the-map" class="row-link">
+      <span class="row-title">The Map</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Discovery bot, on-site delivery, report structure</span>
+    </a>
+    <a href="/deliverables" class="row-link">
+      <span class="row-title">Deliverables</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Map Bot report, Pricing Bot, Outcome Playbook, data model</span>
+    </a>
+    <a href="/delivery-framework" class="row-link">
+      <span class="row-title">Delivery Framework</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Phases, gates, PMO, decision log, risk register, reporting</span>
+    </a>
+    <a href="/scoping-form" class="row-link">
+      <span class="row-title">Scoping Form</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Live form &mdash; fill in during session, saves to server</span>
+    </a>
+    <a href="/scoping-document" class="row-link">
+      <span class="row-title">Scoping Document</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Scope, metrics, failure impact, risks, governance</span>
+    </a>
+    <a href="/approvals-spec" class="row-link">
+      <span class="row-title">Approval-in-the-Loop Spec</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Agent prepares, operator approves from email, apply fires &mdash; trust ladder built in</span>
+    </a>
+    <a href="/playbook-template" class="row-link">
+      <span class="row-title">Outcome Playbook Template</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Trigger, steps, systems, guardrails, success criteria</span>
+    </a>
+    <a href="/project-report" class="row-link">
+      <span class="row-title">Delivery Report Template</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Weekly delivery update, day 30 handover report</span>
+    </a>
+    <a href="/map-bot-preview" class="row-link">
+      <span class="row-title">Map Bot Preview</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Live mockup &mdash; chat + spatial canvas</span>
+    </a>
+  </div>
+
+  <!-- ============================== -->
+  <!-- THE NUMBERS                     -->
+  <!-- ============================== -->
+  <div class="section-group">
+    <div class="section-heading">The Numbers</div>
+    <a href="/financial-plan" class="row-link">
+      <span class="row-title">Financial Plan</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Cash flow, tax planning, unit economics, risk register</span>
+    </a>
+    <a href="/pricing" class="row-link">
+      <span class="row-title">Pricing Calculator</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Interactive &mdash; Automated / Managed / Bespoke tiers</span>
+    </a>
+    <a href="/canvas" class="row-link">
+      <span class="row-title">Original Canvas</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Strategyzer BMC + Value Proposition Canvas</span>
+    </a>
+  </div>
+
+  <!-- ============================== -->
+  <!-- THE EXECUTION                   -->
+  <!-- ============================== -->
+  <div class="section-group">
+    <div class="section-heading">The Execution</div>
+    <a href="/go-to-market" class="row-link">
+      <span class="row-title">Go-to-Market</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">90-day playbook, pipeline model, objection handling</span>
+    </a>
+    <a href="/delivery-roadmap" class="row-link">
+      <span class="row-title">Delivery Roadmap</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">87 items, 8 workstreams, phased delivery plan</span>
+    </a>
+    <a href="/service-management" class="row-link">
+      <span class="row-title">Service Management</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">SLAs, incident response, monthly reviews, change control</span>
+    </a>
+    <a href="/first-meeting-guide" class="row-link">
+      <span class="row-title">First Meeting Guide</span>
+      <span class="row-dots"></span>
+      <span class="row-desc">Preparation, agenda, talking points</span>
+    </a>
+  </div>
+
+  <!-- ============================== -->
+  <!-- LINKS                           -->
+  <!-- ============================== -->
+  <div class="section-group">
+    <div class="footer-row" style="opacity:1; animation:none;">
+      <a href="/download/financial-model.xlsx" class="footer-btn">&#11015; Financial Model</a>
+      <a href="/download/scoping-document.html" class="footer-btn">&#11015; Scoping Template</a>
+      <a href="https://test.afferentic.pages.dev" target="_blank" class="footer-btn subtle">&#8599; Test Site</a>
+      <a href="https://afferentic.com" target="_blank" class="footer-btn subtle">&#8599; Live Site</a>
+    </div>
+  </div>
+
+  <p class="archive-note">Previous plan documents archived and available on request.</p>
+</div>
+
+<script>
+(function() {
+  var lamp = document.querySelector('.lamp-container');
+  if (!lamp) return;
+  window.addEventListener('scroll', function() {
+    var scrollY = window.scrollY || window.pageYOffset;
+    var fade = Math.max(1 - scrollY / 150, 0);
+    lamp.style.opacity = fade;
+  }, { passive: true });
+})();
+</script>
+
+</body>
+</html>
